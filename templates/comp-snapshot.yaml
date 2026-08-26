@@ -1,0 +1,39 @@
+# comp-snapshot.yaml — snapshot de UN comparable
+# Un archivo por comparable en <TICKER>/comps/. Lo escribe statement-mapper (modo
+# ligero). El xlsx SOLO lee snapshots: los múltiplos se calculan por fórmula desde
+# estos inputs — el modelo nunca "sabe" un múltiplo.
+#
+# Abstracción de conector: este formato es el contrato. v1 lo llena captura manual /
+# web search con cita; v2 puede llenarlo un conector de datos (MCP/API) sin tocar
+# ni el modelo ni las skills. La abstracción es el archivo, no la fuente.
+
+ticker: ""
+name: ""
+selected_because: ""          # por qué está en el universo (viene de industry-analysis)
+as_of: ""                     # YYYY-MM-DD HH:MM — CRÍTICO: los precios envejecen.
+                              # model-check flaggea snapshots con antigüedad > stale_days
+stale_days: 5
+
+market_data:                  # cada campo: {value, source, label: observado}
+  price: {}
+  shares_outstanding: {}
+  market_cap: {}              # opcional si price y shares presentes
+
+balance_items:                # del último filing del comparable, con cita de página
+  total_debt: {}
+  cash_and_equivalents: {}
+  minority_interest: {}
+  preferred_equity: {}
+  book_value_equity: {}
+
+income_items:                 # LTM o último anual — indicar cuál en period
+  period: ""                  # ltm | fy2025 | ...
+  revenue: {}
+  ebitda: {}
+  ebit: {}
+  net_income: {}
+  eps_diluted: {}
+
+framework: ""                 # ifrs | us_gaap | nif — para ajustes de comparabilidad
+comparability_notes: ""       # ej. "IFRS 16: EBITDA no comparable directo vs par US GAAP
+                              #      (ASC 842) — ver framework-mapper reference"

@@ -1,0 +1,36 @@
+# macro-view.yaml — house view macro COMPARTIDO por toda la cobertura
+# Vive a nivel workspace, FUERA de las carpetas por emisora. Uno solo para todas.
+# Lo llena el analista: su view propio o el house view de su casa. El plugin lo
+# consume, nunca lo genera (v1). Cada valor lleva fuente y fecha — si la fuente es
+# pública oficial (Banxico, encuestas de expectativas, Fed SEP), etiqueta observado;
+# si es juicio propio o de la casa, etiqueta supuesto.
+
+updated_at: ""                # YYYY-MM-DD — preflight avisa si stale (> staleness_warn_months)
+owner: ""                     # analista o casa
+staleness_warn_months: 3
+
+rates:
+  policy_rate_path:           # [{date, value, label: observado|supuesto, source}]
+    []
+  risk_free_10y: {}           # {value, label, source} — insumo de WACC/CAPM
+
+fx:
+  usdmxn_path: []             # [{date, value, label, source}]
+
+inflation:
+  mx_3y_trailing_cumulative: {}   # {value, label, source}
+  # Monitor NIF B-10: re-expresión se dispara con acumulado trienal >= 26%.
+  # Si este valor se acerca a 26%, impact-triage exige pre-modelar el escenario
+  # de RECONEXIÓN retrospectiva (NIF B-1) para emisoras NIF.
+  mx_forecast_path: []
+  us_forecast_path: []
+
+gdp:
+  mx_growth_path: []          # insumo de la ruta top-down de revenue
+  us_growth_path: []
+
+commodity_decks: []           # [{commodity, unit, path: [{date, value}], label, source}]
+                              # ej. cobre para minera (revenue) o cablero (costo)
+
+equity_risk_premium: {}       # {value, label, source} — CAPM
+notes: ""

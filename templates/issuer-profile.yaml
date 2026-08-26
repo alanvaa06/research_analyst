@@ -1,0 +1,51 @@
+# issuer-profile.yaml — perfil de emisora
+# Lo escribe framework-mapper (dueña única). El usuario confirma cada derivación.
+# Regla: el marco se DERIVA del tipo de emisora; no se pregunta a ciegas.
+
+ticker: ""                    # ej. AMX
+name: ""
+as_of: ""                     # YYYY-MM-DD de creación/última revisión del perfil
+
+listing: ""                   # bmv | sec | dual | private
+issuer_type: ""               # non_financial | bank | insurer | fibra | private
+adr: false                    # true si FPI con programa ADR (20-F)
+
+# --- Marco contable (derivación automática; usuario confirma) ---------------
+# bmv no financiera -> ifrs          (CNBV Boletín 056/2008; CUE Art. 78, desde 2012)
+# bank / insurer    -> cnbv_criteria (Anexo 33 CUB / CNSF)  [FUERA DE ALCANCE v1]
+# private           -> nif           (CINIF)
+# adr: true         -> ifrs_iasb     (SEC Release 33-8879: sin reconciliación US GAAP)
+framework_governing: ""       # ifrs | us_gaap | nif | cnbv_criteria
+framework_confirmed_by_user: false
+framework_notes: ""           # ej. "IFRS-IASB declarado sin reservas en nota 2 del 20-F"
+
+# --- Convenciones específicas de la emisora ---------------------------------
+currency_reporting: ""        # MXN | USD | ...
+currency_functional: ""
+units: ""                     # ej. "MXN millones"
+fiscal_year_end: ""           # MM-DD
+segments: []                  # segmentos reportados, tal como los presenta la emisora
+life_cycle_stage: ""          # embryonic | growth | mature | decline
+                              # (determina horizonte de forecast y peso de métodos)
+
+# --- Valuación: activación de métodos (deriva de issuer_type + life_cycle) --
+valuation_methods:
+  dcf_fcff: true              # core — siempre; terminal dual (gordon + exit multiple)
+  comps: true                 # core — siempre; media armónica
+  ddm: false                  # dividendera estable
+  fcfe: false                 # apalancamiento estable
+  nav_affo: false             # fibra / reit
+  sotp: false                 # conglomerado
+  residual_income: false      # bancos — ESPECIFICADO, INACTIVO hasta v2
+
+# --- Materialidad (umbrales para impact-triage) ------------------------------
+materiality:
+  critical_pct_target_price: 10   # hallazgo mueve precio objetivo >= X% -> crítico
+  relevant_pct_target_price: 3    # entre relevant y critical -> relevante
+                                  # debajo -> cosmético; el analista puede reclasificar
+
+# --- Cumplimiento ------------------------------------------------------------
+mnpi_confirmed_public: false  # usuario confirmó que folders contienen solo info pública
+retention_note: "Nada se borra; versionado _YYYY-MM-DD_v#. Standard V(C): 7 años mínimo."
+
+sources: []                   # filings usados para derivar este perfil, con fecha

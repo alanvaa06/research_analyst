@@ -4,9 +4,27 @@
 > Estructura el trabajo de un analista de principio a fin: de "me asignan una
 > emisora" a "publico la nota". **v0.1.0** — esqueleto completo; en dogfood.
 
-Cubre emisoras bajo **IFRS, US GAAP y NIF**, con el marco regulatorio mexicano
-(BMV/CNBV) como primera ciudadanía. Multi-plataforma: **Claude Code** (plugin
-nativo), **Cursor** y **Codex** (vía [`AGENTS.md`](AGENTS.md)).
+Cubre emisoras bajo **IFRS, US GAAP y NIF** — SEC y BMV son ciudadanas de primera
+clase desde v1, sin distinción de prioridad. Multi-plataforma: **Claude Code**
+(plugin nativo), **Cursor** y **Codex** (vía [`AGENTS.md`](AGENTS.md)).
+
+## ¿Qué emisoras puede cubrir hoy?
+
+| Emisora | Funciona hoy | Notas |
+|---|---|---|
+| **SEC — 10-K/10-Q, US GAAP** | ✅ Sí | Folders, naming, marco y citas normativas (ASC) ya soportados |
+| **BMV no financiera — IFRS** | ✅ Sí | Caso base del diseño; marco derivado automáticamente |
+| **Privada — NIF** | ✅ Sí | Vía CINIF |
+| **FPI / ADR (20-F)** | ✅ Sí | IFRS-IASB sin reconciliación (SEC 33-8879) ya mapeado |
+| **FIBRA / REIT** | ✅ Sí | NAV + FFO/AFFO activados por perfil — convención AFFO local aún `[VERIFICAR]` |
+| **Comparables cruzados IFRS↔US GAAP↔NIF** | ⚠️ Parcial | Las 7 diferencias norma→línea más comunes están verificadas (leases, inventarios, deterioro, etc.); el resto son `[VERIFICAR]`, nunca inventadas |
+| **Bancos / casas de bolsa** | ❌ No — v1 excluye | Requieren mapeo Anexo 33 CUB vs IFRS 9/NIF C-16, sin verificar aún |
+| **Aseguradoras** | ❌ No — v1 excluye | Requieren mapeo CNSF vs IFRS 17 |
+
+Ninguna de las exclusiones es un límite de arquitectura: el `issuer-profile.yaml` ya
+tiene la ruta (`cnbv_criteria`) y la detecta — simplemente avisa que el contenido
+normativo para ese caso no existe todavía. No es release nuevo, es contribución
+(ver Áreas de oportunidad más abajo).
 
 ## La regla central
 
@@ -74,9 +92,10 @@ automáticamente, que enruta cada tarea al `SKILL.md` correcto. No hay paso 2.
 ## Uso
 
 ```
-/init-coverage AMX ./mis-filings/     # cobertura completa: etapas 0→6
-/update-quarter AMX ./nuevo-10q.pdf   # mantenimiento trimestral
-/model-check                          # solo auditar checks del modelo
+/init-coverage AMX ./mis-filings/       # emisora BMV (IFRS) — cobertura completa: etapas 0→6
+/init-coverage AAPL ./sec-filings/      # emisora SEC (US GAAP) — mismo flujo, mismo comando
+/update-quarter AMX ./nuevo-10q.pdf     # mantenimiento trimestral
+/model-check                            # solo auditar checks del modelo
 ```
 
 Toda skill funciona también suelta, en lenguaje natural:
@@ -110,6 +129,7 @@ parcial) y 7 skills, cada una dueña única de sus artefactos:
 
 | Tipo de emisora | Marco | Base |
 |---|---|---|
+| SEC (10-K/10-Q, sin ADR de terceros) | US GAAP | ASC — FASB |
 | BMV no financiera | IFRS (obligatorio desde 2012) | CNBV 056/2008; CUE Art. 78 |
 | Banco / financiera | Criterios CNBV (Anexo 33) — **fuera de v1** | Anexo 33 CUB |
 | Privada | NIF (CINIF) | — |

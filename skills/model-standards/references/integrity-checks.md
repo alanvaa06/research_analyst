@@ -33,6 +33,7 @@ implementación única, cero interpretación del agente.
 | C6 | Identidad DuPont | ROE directo (NI/capital prom.) − ROE DuPont 5 factores = 0, todos los periodos (tab Ratios) |
 | C7 | CCC del forecast consistente con schedule de WC | Ratios (forecast) vs días DIO/DSO/DPO del bloque `Sch: WC` |
 | C8 | Cross-foot trimestral (solo `annual_plus_quarterly`) | En `Quarterly`: suma de 4 trimestres observados = anual observado, por línea compartida; en años incompletos el check cubre YTD |
+| C9 | Histórico del xlsx = capa de captura | Escaneo por código: celdas históricas de IS/BS/CF coinciden con `model/inputs/canonical_annual.csv` (y `canonical_quarterly.csv` si aplica), tolerancia de redondeo; discrepancia = falla de captura o edición manual del histórico |
 
 ## De contenido (doctrina del plugin)
 

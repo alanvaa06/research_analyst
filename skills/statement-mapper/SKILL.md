@@ -10,6 +10,14 @@ Su producto: cifras `observado` con cita exacta (documento, página/nota), mapea
 las líneas del `model-spec`. **No escribe en el xlsx** (entrega el mapeo a
 model-standards) y **no mueve archivos** (eso es coverage-folders).
 
+**Salida formal — `model/inputs/`** (dueña también de esta carpeta):
+- `extract_*.json`: papeles de trabajo por filing — cada cifra con valor,
+  documento, página/nota, fecha.
+- `canonical_annual.csv` / `canonical_quarterly.csv` / `consolidated_long.csv`:
+  el contrato máquina que consume model-standards (columnas mínimas en
+  `templates/coverage-tree.md` §model/inputs). El histórico del xlsx se puebla
+  desde estos CSV — jamás re-tecleado (check C9 verifica coincidencia).
+
 ## Cuándo corre
 
 - `/init-coverage` paso 3: captura de históricos (en paralelo con industry-analysis).

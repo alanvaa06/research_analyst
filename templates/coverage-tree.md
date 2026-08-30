@@ -6,6 +6,11 @@ Cuatro categorías: **inputs** (lo que entra) / **config** / **outputs** (lo que
 el pipeline produce) / **registro** (memoria append-only). Archivos-contrato
 únicos viven en la RAÍZ del ticker — un archivo no gana carpeta.
 
+**`workspace/` es un nombre ilustrativo**: significa LA carpeta que el usuario
+designó como raíz de sus coberturas (ej. `Valuation_Records/`). JAMÁS crear
+una subcarpeta literal llamada `workspace` dentro de ella — `macro/` y los
+tickers van directo en la raíz designada.
+
 ```
 workspace/
 ├── macro/                        # TODO lo macro — compartido; SOLO a nivel workspace

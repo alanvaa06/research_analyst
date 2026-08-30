@@ -26,6 +26,7 @@ import json
 import os
 import sys
 import time
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -56,10 +57,29 @@ class FilingRow:
     primary_doc: str
 
 
+BLOCKED_MSG = """[x] Sin acceso de red a SEC ({err}).
+    El entorno bloquea www.sec.gov / data.sec.gov (proxy con allowlist —
+    tipico en Claude Cowork y sandboxes corporativos). Opciones:
+    1) Permitir los dominios www.sec.gov y data.sec.gov en el entorno
+       (Cowork: configuracion de red/allowlist del espacio) y reintentar.
+    2) Correr este mismo comando en una maquina con salida a internet y
+       copiar los archivos resultantes a la carpeta destino.
+    3) Descargar los filings a mano desde efts.sec.gov/LATEST/search-index
+       y dejar que coverage-folders los archive.
+    NUNCA sustituyas el filing integro por contenido procesado de un lector
+    web: el pipeline cita por documento y pagina."""
+
+
 def _get_json(url: str, user_agent: str) -> dict:
     req = urllib.request.Request(url, headers={"User-Agent": user_agent})
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.HTTPError, urllib.error.URLError) as exc:
+        code = getattr(exc, "code", None)
+        if code in (403, 407) or isinstance(exc, urllib.error.URLError):
+            raise SystemExit(BLOCKED_MSG.format(err=f"{type(exc).__name__} {code or exc.reason}"))
+        raise
 
 
 def _download(url: str, dest: Path, user_agent: str) -> None:

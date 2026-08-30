@@ -32,6 +32,13 @@ reporte oficial, con página) · `guidance` (lo dijo la dirección) · `supuesto
 enruta cada tarea a la skill correcta. Codex también lee el marketplace:
 `codex plugin marketplace add alanvaa06/research_analyst`.
 
+> **Entornos con red restringida (Claude Cowork, sandboxes):** para que la
+> descarga de filings y de historia XBRL funcione, permite los dominios
+> `www.sec.gov` y `data.sec.gov` en el allowlist del entorno ANTES de abrir
+> la cobertura. Si no se puede, corre `tools/sec_fetch.py` y
+> `tools/xbrl_fetch.py` en tu máquina local y copia los archivos — los tools
+> te lo indican solos al detectar el bloqueo.
+
 ## El flujo completo
 
 Cuatro comandos orquestan todo. Antes de correr verifican que nada falte

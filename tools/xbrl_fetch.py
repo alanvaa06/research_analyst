@@ -21,6 +21,7 @@ import csv
 import json
 import os
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Optional
@@ -63,10 +64,23 @@ CONCEPT_MAP = {
 }
 
 
+BLOCKED_MSG = """[x] Sin acceso de red a SEC ({err}).
+    El entorno bloquea data.sec.gov (proxy con allowlist — tipico en Claude
+    Cowork). Opciones: 1) permitir www.sec.gov y data.sec.gov en el allowlist
+    del entorno y reintentar; 2) correr este comando en una maquina con red y
+    copiar el CSV a model/inputs/; 3) captura manual via statement-mapper."""
+
+
 def _get_json(url: str, user_agent: str) -> dict:
     req = urllib.request.Request(url, headers={"User-Agent": user_agent})
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.HTTPError, urllib.error.URLError) as exc:
+        code = getattr(exc, "code", None)
+        if code in (403, 407) or isinstance(exc, urllib.error.URLError):
+            raise SystemExit(BLOCKED_MSG.format(err=f"{type(exc).__name__} {code or exc.reason}"))
+        raise
 
 
 def resolve_cik(ticker: str, user_agent: str) -> str:

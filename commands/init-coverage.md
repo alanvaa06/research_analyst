@@ -16,7 +16,12 @@ Gates de usuario en cada transición + protocolo de debate
    presentes). `brand/DESIGN.md` presente ⇒ xlsx-building lo usará para los
    colores de marca del modelo.
    **Filings faltantes + emisora SEC ⇒ ofrecer descarga** (gate — preguntar,
-   nunca descargar solo): `python tools/sec_fetch.py <TICKER> --dest
+   nunca descargar solo). ANTES de ofrecer, probar conectividad: en entornos
+   con egress restringido (Claude Cowork, sandboxes) los tools reportan el
+   bloqueo con opciones — la correcta suele ser permitir `www.sec.gov` y
+   `data.sec.gov` en el allowlist del entorno; JAMÁS sustituir el filing
+   íntegro por contenido procesado de un lector web (el pipeline cita por
+   documento y página): `python tools/sec_fetch.py <TICKER> --dest
    workspace/<TICKER>/filings/sec --ua "<nombre correo>"` (o env `SEC_EDGAR_UA`;
    `--dry-run` para listar primero). El tool baja crudo por fecha de periodo +
    manifest CSV; coverage-folders renombra a la convención FY/#Q. Emisoras BMV:

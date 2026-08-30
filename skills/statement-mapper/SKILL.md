@@ -25,12 +25,12 @@ model-standards) y **no mueve archivos** (eso es coverage-folders).
 3. Mapea a las líneas del model-spec. La presentación de la emisora rara vez coincide
    1:1 — propone el mapeo y las reclasificaciones como PROPUESTA, con el racional.
 4. Gate: el usuario aprueba mapeo y reclasificaciones antes de entregar a
-   model-standards. Las reclasificaciones aprobadas se registran en `log/decisions.md`.
+   model-standards. Las reclasificaciones aprobadas se registran en `journal/decisions.md`.
 5. Etiquetado en la fuente: cifras de estados = `observado`; proyecciones, metas y
    rangos que da la administración (guidance del press release, del call, del MD&A)
    = `guidance` — NUNCA se capturan como observado. Doctrina: del management,
    priorizar lo cuantitativo verificable.
-5b. **Transcripts obligatorios si existen:** si `earnings-transcripts/` tiene el
+5b. **Transcripts obligatorios si existen:** si `transcripts/` tiene el
    transcript del periodo capturado, leerlo NO es opcional — extraer todo
    guidance cuantitativo (rangos, metas, capex/margen/tax guiado, color por
    segmento) etiquetado `guidance` con cita (transcript, sección/página). Es la
@@ -40,7 +40,7 @@ model-standards) y **no mueve archivos** (eso es coverage-folders).
 
 ## Procedimiento — comp snapshot (modo ligero)
 
-1. Universo viene de `notes/industry-report.md` (industry-analysis lo decide, no tú).
+1. Universo viene de `research/industry-report.md` (industry-analysis lo decide, no tú).
 2. Por comparable: llena `templates/comp-snapshot.yaml` — balance e income items del
    último filing del comp con cita; market data (precio, acciones) de fuente pública
    con fuente y **timestamp** (`as_of` con hora: los precios envejecen).
@@ -56,7 +56,7 @@ model-standards) y **no mueve archivos** (eso es coverage-folders).
 - No corregir la aritmética de la emisora en silencio: si la suma del filing no
   cuadra, se reporta como hallazgo (posible input de impact-triage), no se "arregla".
 - Períodos re-expresados o re-presentados por la emisora: capturar la versión más
-  reciente y anotar la re-presentación en `log/decisions.md`.
+  reciente y anotar la re-presentación en `journal/decisions.md`.
 
 ## Entrevista de cierre
 

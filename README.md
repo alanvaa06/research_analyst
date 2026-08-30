@@ -60,7 +60,7 @@ rastrear de dónde salió:
 |---|---|
 | `observado` | Viene de un reporte oficial de la empresa, con fuente y página |
 | `guidance` | Lo dijo la dirección de la empresa — ni verificable ni del analista |
-| `supuesto` | Lo puso el analista, y vive en la carpeta `assumptions/` |
+| `supuesto` | Lo puso el analista, y vive en `driver-map.md` y la tab Assumptions del modelo |
 | `output` | Es el resultado de una fórmula |
 
 ---

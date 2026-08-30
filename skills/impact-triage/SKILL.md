@@ -25,7 +25,7 @@ Umbrales por emisora en `issuer-profile.yaml → materiality`:
 | **Cosmético** | Debajo de `relevant_pct` y sin contacto con tesis ni drivers | Registro en log; nada más |
 
 El analista puede reclasificar cualquier hallazgo — la reclasificación se registra
-con su porqué en `log/decisions.md` (es señal de tesis, no corrección).
+con su porqué en `journal/decisions.md` (es señal de tesis, no corrección).
 
 ## Procedimiento — triage de diff trimestral
 

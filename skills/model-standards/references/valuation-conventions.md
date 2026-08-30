@@ -34,7 +34,7 @@ El football field agrega SOLO métodos activos en `issuer-profile.yaml`.
     con fuente en comentario; D y E del `comps/*.yaml`.
   - β_u grupo = mediana; β_relevered = β_u grupo × (1 + (1−t)·D/E objetivo).
   - D/E objetivo: `supuesto` del analista en Assumptions. El analista puede
-    sobreescribir el beta final (documentado en log/decisions.md); la mecánica
+    sobreescribir el beta final (documentado en journal/decisions.md); la mecánica
     queda visible como referencia.
 - **Bloque reverse DCF (expectativas implícitas)** — forma cerrada, sin Goal Seek:
   - EV de mercado = mkt cap actual + deuda neta + minoritarios + preferentes.

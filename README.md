@@ -101,7 +101,7 @@ lo que cambia con el tiempo se guarda **fechado** — el vigente es el más
 reciente y nada se borra jamás (retención de 7 años).
 
 ```
-Valuation_Records/             # tu carpeta raíz — el nombre lo pones tú
+<tu-carpeta-raíz>/             # cualquier nombre; adentro SOLO emisoras + macro/
 ├── macro/                     # TODO lo macro, compartido por todas las coberturas:
 │   ├── macro-view.yaml        #   los supuestos vigentes (tasa, FX, PIB, inflación)
 │   ├── sources/               #   tu research macro y el de terceros (pdf, html, md)

@@ -6,14 +6,14 @@ Cuatro categorías: **inputs** (lo que entra) / **config** / **outputs** (lo que
 el pipeline produce) / **registro** (memoria append-only). Archivos-contrato
 únicos viven en la RAÍZ del ticker — un archivo no gana carpeta.
 
-**La raíz es la carpeta que el usuario designó** (aquí ejemplificada como
-`Valuation_Records/`; puede llamarse como sea). `macro/` y los tickers van
-DIRECTO en ella: `Valuation_Records/AAPL/`, `Valuation_Records/AMZN/`,
-`Valuation_Records/macro/`. JAMÁS crear una subcarpeta intermedia
-(`workspace/`, `coberturas/`, etc.).
+**La raíz es la carpeta que el usuario designó — su nombre es SUYO** (puede
+ser `Valuation_Records`, `Valuation`, lo que sea; el plugin nunca la nombra ni
+la renombra). El invariante es el CONTENIDO: la raíz contiene SOLO una carpeta
+por emisora (`AAPL/`, `AMX/`, …) más `macro/` — nada más. JAMÁS crear una
+subcarpeta intermedia (`workspace/`, `coberturas/`, etc.).
 
 ```
-Valuation_Records/                # <- la carpeta raiz del usuario, su nombre
+<carpeta-raiz>/                   # <- la del usuario, cualquier nombre
 ├── macro/                        # TODO lo macro — compartido; SOLO en la raiz
 │   ├── macro-view.yaml           # VIGENTE, nombre fijo (lo consume código);
 │   │                             #   dentro de un ticker es violación de contrato

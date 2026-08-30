@@ -8,7 +8,8 @@ nunca éxito. Orden: primero estructura, luego contabilidad, luego contenido.
 
 | # | Check | Cómo |
 |---|---|---|
-| S1 | Todas las tabs del model-spec presentes; schedules del driver-map existen | openpyxl: nombres de hoja vs contrato |
+| S1 | Todas las tabs del model-spec presentes; en `Schedules`, un bloque `Sch: <nombre>` por schedule del driver-map + bloques core (PPE, Debt, WC) | openpyxl: nombres de hoja vs contrato; escaneo de col. A de `Schedules` por headers `Sch: ` vs driver-map |
+| S9 | Schedules como bloques, no como tabs: ninguna hoja con nombre `Sch_*` o `Sch *` | escaneo de nombres de hoja |
 | S2 | Cero links externos a otros libros | escaneo de fórmulas por `[` |
 | S3 | Sin funciones volátiles (OFFSET, INDIRECT, NOW, TODAY) | escaneo de fórmulas |
 | S4 | Sin números hard-coded dentro de fórmulas (fuera de Assumptions) | escaneo: constantes en fórmulas de tabs de cálculo |
@@ -24,8 +25,10 @@ nunca éxito. Orden: primero estructura, luego contabilidad, luego contenido.
 | C1 | Balance cuadra cada periodo | A − (P + C) = 0, todos los periodos |
 | C2 | Tie-out de caja | caja final CF = caja BS, todos los periodos |
 | C3 | Roll de utilidades retenidas | RE₁ = RE₀ + NI − dividendos |
-| C4 | Depreciación acumulada consistente con schedule | BS vs Sch_PPE |
-| C5 | Interés consistente con schedule de deuda | IS vs Sch_Debt (documentar switch si hay circularidad) |
+| C4 | Depreciación acumulada consistente con schedule | BS vs bloque `Sch: PPE` de Schedules |
+| C5 | Interés consistente con schedule de deuda | IS vs bloque `Sch: Debt` (documentar switch si hay circularidad) |
+| C6 | Identidad DuPont | ROE directo (NI/capital prom.) − ROE DuPont 5 factores = 0, todos los periodos (tab Ratios) |
+| C7 | CCC del forecast consistente con schedule de WC | Ratios (forecast) vs días DIO/DSO/DPO del bloque `Sch: WC` |
 
 ## De contenido (doctrina del plugin)
 
@@ -39,6 +42,8 @@ nunca éxito. Orden: primero estructura, luego contabilidad, luego contenido.
 | D6 | **Staleness de macro-view**: `updated_at` dentro de `staleness_warn_months` | aviso, no bloqueo |
 | D7 | **Monitor NIF B-10**: si emisora NIF y acumulado trienal en macro-view ≥ 22%, exigir escenario de reconexión pre-modelado | ver framework-mapper reference |
 | D8 | Etiquetas de trazabilidad presentes: inputs con comentario de fuente (observado) o marca guidance/supuesto | muestreo por tab |
+| D9 | **Calidad de utilidades**: CFO/NI < 1 en ≥ 2 periodos consecutivos, o accruals ratio fuera de la banda histórica de la emisora | aviso, no bloqueo; material de entrevista |
+| D4b | **g implícita de mercado** (reverse DCF en Val_DCF) vs g terminal del analista | divergencia grande = pregunta obligada en entrevista de cierre; nunca bloquea |
 
 ## Reporte de /model-check
 

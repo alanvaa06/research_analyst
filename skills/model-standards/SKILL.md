@@ -36,13 +36,19 @@ Falta un contrato → detente y repórtalo; no construyas parcial ni inventes el
 2. Genera el xlsx con herramienta determinista (openpyxl o equivalente) siguiendo
    `model-spec.md`: tabs en orden, colores y convenciones de
    `references/excel-practices.md`.
-3. Un schedule por driver del driver-map (`Sch_<driver>`). El build-up de revenue
-   sale de los schedules; la tab `Rev_Reconcile` cruza bottom-up vs top-down.
-4. Pestañas de valuación según métodos activos — fórmulas y convenciones exactas en
-   `references/valuation-conventions.md`. Usuario en el loop en cada supuesto.
-5. Corre TODOS los checks de `references/integrity-checks.md`. Cualquier rojo:
+3. **UNA sola tab `Schedules`**: un bloque `Sch: <nombre>` por driver del
+   driver-map, apilados, más los bloques core (PPE, Debt, WC). Jamás una tab por
+   schedule — menos tabs, mejor (check S9). El build-up de revenue sale de los
+   bloques; la tab `Rev_Reconcile` cruza bottom-up vs top-down.
+4. Tab `Ratios` (core, solo fórmulas) según `references/ratios-analytics.md`:
+   DuPont, ROIC/economic profit, ratios estándar, CCC, DOL/DFL/DTL, screening de
+   crédito (solo non_financial), calidad de utilidades.
+5. Pestañas de valuación según métodos activos — fórmulas y convenciones exactas en
+   `references/valuation-conventions.md` (incluye bloque Hamada, reverse DCF y
+   múltiplos justificados + PVGO). Usuario en el loop en cada supuesto.
+6. Corre TODOS los checks de `references/integrity-checks.md`. Cualquier rojo:
    arregla estructura/fórmulas (nunca "ajustes" a cifras observadas) y re-corre.
-6. Entrega solo con checks verdes. Check rojo irresoluble = reporta FALLA con celdas
+7. Entrega solo con checks verdes. Check rojo irresoluble = reporta FALLA con celdas
    afectadas. Un modelo que "casi cuadra" no existe.
 
 ## Modo auditoría (standalone y /model-check)
@@ -65,11 +71,16 @@ Precondición standalone: ninguna. Es el punto de entrada más barato del plugin
 
 Objetivo (preguntas adaptativas — generarlas desde lo construido y el journal, según
 `templates/debate-protocol.md`): **¿el modelo captura el negocio real o solo la
-contabilidad?** Sondear: qué schedule falta, qué línea del build-up quedó floja, si
-la estructura refleja cómo la emisora gana dinero. Registrar en thesis-journal.
+contabilidad?** Sondear: qué bloque de Schedules falta, qué línea del build-up quedó
+floja, si la estructura refleja cómo la emisora gana dinero. Confrontar el spread
+ROIC−WACC histórico (tab Ratios) contra el moat que afirma industry-report, y la g
+implícita de mercado (reverse DCF, check D4b) contra la g del analista. Registrar
+en thesis-journal.
 
 ## Referencias
 
 - `references/excel-practices.md` — convenciones CFI: leer antes de construir.
 - `references/integrity-checks.md` — la lista S/C/D completa: leer antes de auditar.
 - `references/valuation-conventions.md` — leer antes de armar cualquier Val_*.
+- `references/ratios-analytics.md` — spec de la tab Ratios y del bloque `Sch: WC`:
+  leer antes de construir Ratios o Schedules.

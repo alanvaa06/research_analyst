@@ -49,7 +49,9 @@ SKILL.md); las demás solo leen.
 ## Restricciones de entorno
 
 - Sin APIs de pago ni keys privadas (v1). Fuentes: filings locales del usuario,
-  datos públicos, web search de tu plataforma si existe.
+  datos públicos, web search de tu plataforma si existe. Filings SEC faltantes:
+  `python tools/sec_fetch.py <TICKER> --ua "<nombre correo>"` (EDGAR público,
+  gratis; SIEMPRE con gate del usuario antes de descargar).
 - xlsx solo vía `tools/xlsx_builder.py` (skill xlsx-building) — nunca openpyxl
   crudo para estructura/formato; audit de formato: `python tools/xlsx_builder.py audit <modelo>`.
 - Nada se borra en la carpeta de cobertura; retención mínima 7 años.

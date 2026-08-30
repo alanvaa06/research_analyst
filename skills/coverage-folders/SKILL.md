@@ -41,6 +41,15 @@ metadatos, mueve y renombra. Las demás skills solo leen rutas.
    ambos, nuevo con sufijo `_amended`.
 3. Renombra, coloca, reporta ruta final.
 
+## Procedimiento — renombrado desde sec_fetch
+
+`tools/sec_fetch.py` baja crudo (`<TICKER>_<form>_<reportDate>.htm`) + manifest
+CSV. Esta skill convierte al naming de la convención usando el manifest y el
+`fiscal_year_end` del perfil: 10-K ⇒ `FYyyyy`; 10-Q ⇒ `#Qyyyy` (trimestre
+FISCAL derivado del reportDate vs cierre fiscal, no calendario); 8-K ⇒ fecha.
+Sin perfil aún (init paso 1): dejar el nombre crudo y renombrar al confirmarse
+el perfil en el paso 2. El manifest se conserva junto a los filings.
+
 ## Reglas duras
 
 - **Nada se borra, jamás.** Retención mínima 7 años (Standard V(C)). "Limpiar la

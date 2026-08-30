@@ -15,6 +15,12 @@ Gates de usuario en cada transición + protocolo de debate
    (statement-mapper los lee como fuente de guidance — no son opcionales una vez
    presentes). `brand/DESIGN.md` presente ⇒ xlsx-building lo usará para los
    colores de marca del modelo.
+   **Filings faltantes + emisora SEC ⇒ ofrecer descarga** (gate — preguntar,
+   nunca descargar solo): `python tools/sec_fetch.py <TICKER> --dest
+   workspace/<TICKER>/filings/sec --ua "<nombre correo>"` (o env `SEC_EDGAR_UA`;
+   `--dry-run` para listar primero). El tool baja crudo por fecha de periodo +
+   manifest CSV; coverage-folders renombra a la convención FY/#Q. Emisoras BMV:
+   sin API pública — filings los trae el usuario.
 3. Marco contable inferible del filing — si ambiguo, preguntar antes de crear perfil.
 4. Herramienta determinista para xlsx disponible (openpyxl o equivalente) — sin
    ella no se construye modelo.

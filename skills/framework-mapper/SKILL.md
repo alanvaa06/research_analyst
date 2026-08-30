@@ -26,8 +26,11 @@ inventar una cita.** Una cita inventada es la falla más grave posible de esta s
 3. Contrasta derivación vs lo declarado en el filing. Discrepancia = preguntar al
    usuario, no resolver por su cuenta.
 4. Llena `templates/issuer-profile.yaml` completo (convenciones: moneda, unidades,
-   cierre, segmentos, life_cycle_stage, métodos de valuación derivados).
-5. Gate: el usuario confirma cada derivación (`framework_confirmed_by_user: true`).
+   cierre, segmentos, life_cycle_stage, métodos de valuación derivados,
+   `model_periodicity` — propuesta: `annual_plus_quarterly` si coverage-folders
+   archivó trimestrales, `annual` si solo hay anuales; PREGUNTA, no asumas).
+5. Gate: el usuario confirma cada derivación (`framework_confirmed_by_user: true`
+   y `periodicity_confirmed_by_user: true`).
 
 Detección de financiera: `issuer_type: bank|insurer` ⇒ el perfil se crea, se marca
 fuera de alcance, y el pipeline avisa que las citas del plugin NO aplican a criterios

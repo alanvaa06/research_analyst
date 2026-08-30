@@ -14,8 +14,12 @@ Gates de usuario en cada transición + protocolo de debate
 3. Marco contable inferible del filing — si ambiguo, preguntar antes de crear perfil.
 4. Herramienta determinista para xlsx disponible (openpyxl o equivalente) — sin
    ella no se construye modelo.
-5. Usuario confirma alcance: periodos históricos, horizonte de forecast, métodos de
-   valuación a estructurar (el perfil propondrá; aquí solo el marco general).
+5. Usuario confirma alcance: periodos históricos, horizonte de forecast,
+   **periodicidad del modelo** (anual / anual + tab Quarterly / trimestral —
+   pregunta OBLIGATORIA: si el paso 2 encontró trimestrales archivados, proponer
+   `annual_plus_quarterly` como default y dejar decidir; JAMÁS asumir anual en
+   silencio) y métodos de valuación a estructurar (el perfil propondrá; aquí
+   solo el marco general).
 6. **Guard MNPI (Standard II(A)):** usuario confirma que TODO el contenido de los
    folders es información pública. Sin confirmación, no se procesa contenido.
 7. `macro-view.yaml`: existe y `updated_at` dentro de `staleness_warn_months` —

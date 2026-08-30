@@ -32,6 +32,7 @@ implementación única, cero interpretación del agente.
 | C5 | Interés consistente con schedule de deuda | IS vs bloque `Sch: Debt` (documentar switch si hay circularidad) |
 | C6 | Identidad DuPont | ROE directo (NI/capital prom.) − ROE DuPont 5 factores = 0, todos los periodos (tab Ratios) |
 | C7 | CCC del forecast consistente con schedule de WC | Ratios (forecast) vs días DIO/DSO/DPO del bloque `Sch: WC` |
+| C8 | Cross-foot trimestral (solo `annual_plus_quarterly`) | En `Quarterly`: suma de 4 trimestres observados = anual observado, por línea compartida; en años incompletos el check cubre YTD |
 
 ## De contenido (doctrina del plugin)
 

@@ -160,8 +160,20 @@ marketplace, sin pasos extra:
 
 Comandos, *skills* y hooks funcionan igual en Cowork que en Claude Code.
 
-**Cursor o Codex:** clona el repositorio dentro de tu espacio de trabajo. Ambos
-leen [`AGENTS.md`](AGENTS.md) automáticamente, que enruta cada tarea a la
+**Codex** (CLI / app de escritorio). El repositorio incluye
+`.codex-plugin/plugin.json`, y Codex también lee el marketplace en formato
+`.claude-plugin/` por compatibilidad:
+
+```bash
+codex plugin marketplace add alanvaa06/research_analyst
+```
+
+Luego instala **research-analyst** desde el navegador de plugins (`/plugins`).
+Nota: Codex no soporta comandos slash de plugins — usa las *skills* pidiéndolo
+en lenguaje natural (o clona el repo: Codex lee [`AGENTS.md`](AGENTS.md)).
+
+**Cursor:** clona el repositorio dentro de tu espacio de trabajo. Lee
+[`AGENTS.md`](AGENTS.md) automáticamente, que enruta cada tarea a la
 habilidad (*skill*) correcta. No hay paso 2.
 
 ## Uso

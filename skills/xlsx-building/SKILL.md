@@ -21,9 +21,20 @@ las best practices escritas y entregó Calibri con gridlines).
 1. **Scaffold**: instancia `ModelStyler` (fija calc auto + sello F10). Crea cada
    tab con `new_sheet` (gridlines off + freeze), `brand_bar`, `label_col_width`,
    `period_header` (sufijos A/E). Tabs y orden: `templates/model-spec.md`.
-2. **Secciones**: `section_header` (banda naranja) / `subsection`. En la tab
-   `Schedules`: un bloque por schedule con `schedule_block_header` ("Sch: X") y
-   `group_rows` sobre el contenido — JAMÁS una hoja por schedule.
+2. **Secciones**: el modelo vive en la hoja única `Model` — secciones
+   Assumptions → IS → BS → CF → DCF → Ratios → Schedules con `section_header`
+   (banda) y `group_rows` (colapsables). Schedules: un bloque por schedule con
+   `schedule_block_header` ("Sch: X") — JAMÁS una hoja por schedule ni hojas
+   IS/BS/CF sueltas. Periodicidad mixta: `quarter_header` para el tramo
+   trimestral estimado antes de `period_header` anual; el anual corriente =
+   suma de sus trimestres por fórmula (C8 estructural).
+2b. **Ratios por código**: la sección Ratios se genera con
+   `ModelStyler.build_ratios(ws, start_row, first_col, n_cols, ref, wacc_ref)`
+   — `ref` es el registro canon→referencia de fila que el build ya conoce
+   (viene de poblar los estados desde los CSVs canónicos). PROHIBIDO armar
+   Ratios a mano: el check F13 exige el set completo y `build_ratios` lo
+   escribe por construcción. Si `build_ratios` reporta canons faltantes, eso
+   es un hueco del mapeo de captura — repórtalo, no lo tapes.
 3. **Contenido**: toda celda vía `set_cell` con su `CellRole` (INPUT / OBSERVED /
    FORMULA / LINK / WARN / LABEL) y `NumFmt` de la whitelist. El role fija color
    y fill — no elijas colores. Series (drivers, líneas de estados): vía
@@ -70,10 +81,16 @@ reconstruirlo, el orden es fijo:
 2. **Gate**: mostrar al usuario qué se PRESERVA (valores, etiquetas de fila,
    lógica de fórmulas, supuestos) y qué se DESCARTA (todo el formato, tabs
    `Sch_*`, series partidas). Sin aprobación no hay rebuild.
-3. **Rebuild**: el modelo viejo es FUENTE DE CONTENIDO, jamás de formato —
-   extrae valores/labels/fórmulas con openpyxl y reconstruye vía `ModelStyler`
-   contra el model-spec vigente. Versión nueva `_YYYY-MM-DD_v#`; el original
-   queda intacto (nada se borra).
+3. **Rebuild**: el modelo viejo es FUENTE DE CONTENIDO, jamás de formato NI de
+   forma — extrae valores/labels/fórmulas con openpyxl y reconstruye vía
+   `ModelStyler` contra el model-spec vigente. Versión nueva `_YYYY-MM-DD_v#`;
+   el original queda intacto (nada se borra).
+3b. **Normalización de series (obligatoria)**: transcribir ≠ copiar. Series
+   partidas del original (fila "histórico" + fila "forecast" de la misma
+   métrica) se FUSIONAN en una fila (checks F11/F12); valores derivables hacia
+   atrás (índices, ASP implícitos, ratios) se poblan por fórmula en el tramo
+   histórico, jamás quedan vacíos. El patrón viejo no se hereda: la lección del
+   re-smoke AAPL v2 fue transcribir demasiado literal.
 4. **Re-audit + paridad (obligatorio)**: checks F en verde Y check de paridad —
    los outputs clave del viejo y el nuevo coinciden (balance check, revenue por
    periodo, resultado de valuación). Divergencia = FALLA con celdas afectadas:

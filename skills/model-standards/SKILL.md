@@ -39,16 +39,16 @@ Falta un contrato → detente y repórtalo; no construyas parcial ni inventes el
    obligatoria, nunca openpyxl crudo para estructura/formato) siguiendo
    `model-spec.md`: tabs en orden, formato 100% por código
    (`references/excel-practices.md` es el contrato legible).
-3. **UNA sola tab `Schedules`**: un bloque `Sch: <nombre>` por driver del
-   driver-map, apilados, más los bloques core (PPE, Debt, WC). Jamás una tab por
-   schedule — menos tabs, mejor (check S9). El build-up de revenue sale de los
-   bloques; la tab `Rev_Reconcile` cruza bottom-up vs top-down.
-4. Tab `Ratios` (core, solo fórmulas) según `references/ratios-analytics.md`:
-   DuPont, ROIC/economic profit, ratios estándar, CCC, DOL/DFL/DTL, screening de
-   crédito (solo non_financial), calidad de utilidades. Si
-   `model_periodicity: annual_plus_quarterly`: tab `Quarterly` (captura
-   observada + LTM + actual-vs-estimado; cross-foot C8) — trimestres JAMÁS
-   mezclados en las tabs anuales.
+3. **UNA sola hoja `Model`** con secciones apiladas y outline (model-spec §Model):
+   Assumptions → IS → BS → CF → DCF → Ratios → Schedules. Schedules: un bloque
+   `Sch: <nombre>` por driver + cores (PPE, Debt, WC) — jamás hojas sueltas
+   (check S9). Periodicidad `annual_plus_quarterly`: columnas trimestrales
+   estimadas del año en curso y el siguiente antes de las anuales; el anual
+   corriente = suma de trimestres por fórmula (C8 estructural); assumptions
+   trimestrales en el tramo corto.
+4. Sección `Ratios` generada por `ModelStyler.build_ratios` con el registro
+   canon→fila del build (completitud = check F13; jamás a mano). Tab
+   `Quarterly` (si aplica): captura observada + LTM + actual-vs-estimado.
 5. Pestañas de valuación según métodos activos — fórmulas y convenciones exactas en
    `references/valuation-conventions.md` (incluye bloque Hamada, reverse DCF y
    múltiplos justificados + PVGO). Usuario en el loop en cada supuesto.

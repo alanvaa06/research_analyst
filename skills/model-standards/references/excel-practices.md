@@ -12,11 +12,16 @@ freeze y outline salen del módulo. `/model-check` audita esto con los checks F
 
 ## Estructura
 
-- Separación por MÓDULO, nunca por schedule: los schedules viven como bloques
-  `Sch: <nombre>` dentro de la única tab `Schedules` (convención CFI: el caso
-  AMZN mete IS+BS+CF+schedules en una sola tab de 274 filas con outline).
-- Menos tabs, mejor. El conteo de tabs del modelo es fijo (model-spec); solo
-  crecen los bloques.
+- **El modelo vive en UNA hoja `Model`** con secciones apiladas y outline:
+  Assumptions → IS → BS → CF → DCF → Ratios → Schedules (convención CFI: su
+  "Financial Model" mete estados + schedules + valuación en una sola hoja de
+  274 filas colapsable). Tabs aparte solo para granularidad o estructura
+  distinta: Quarterly, Rev_Reconcile, Val_Comps, Sensitivity, Summary.
+- Menos tabs, mejor. El conteo de tabs es fijo (model-spec); crecen secciones.
+- Periodicidad mixta (`annual_plus_quarterly`): trimestres estimados del año en
+  curso y el siguiente ANTES de los años anuales; el anual corriente = suma de
+  sus trimestres por fórmula (C8 estructural); assumptions trimestrales en el
+  tramo corto. S5 (una fórmula por fila) aplica POR TRAMO de granularidad.
 - Flujo top-to-bottom, left-to-right; periodos en columnas, líneas en filas.
 - Un archivo por modelo; cero links entre libros.
 - Cover con propósito, versión, autor, fecha, leyenda de colores y la celda

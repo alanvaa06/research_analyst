@@ -1,9 +1,13 @@
 # Ratios & Analytics — spec de la tab `Ratios` y del bloque `Sch: WC`
 
-Tab core: siempre activa, como IS/BS/CF. Solo fórmulas sobre los 3 estados —
-**cero inputs del analista en esta tab**. Histórico + forecast; una fórmula por
-fila (check S5 aplica). Denominadores de balance: promedio de periodo
+Sección core de la hoja `Model` (siempre activa). Solo fórmulas sobre los 3
+estados — **cero inputs del analista**. Histórico + forecast; una fórmula por
+fila y tramo (check S5). Denominadores de balance: promedio de periodo
 ((inicio+fin)/2), consistente en TODAS las filas.
+
+**Generación: SOLO vía `ModelStyler.build_ratios`** (registro canon→fila del
+build; completitud auditada por check F13 contra `REQUIRED_RATIO_LABELS`).
+Este documento es el contrato legible de lo que ese código implementa.
 
 ## Bloque A — DuPont
 

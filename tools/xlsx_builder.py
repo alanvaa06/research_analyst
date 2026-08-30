@@ -94,8 +94,22 @@ _THIN = Side(style="thin")
 _DOUBLE = Side(style="double")
 
 # Sheets that must carry frozen panes (data grids). Cover/Checks/Summary exempt.
-FROZEN_SHEET_PREFIXES = ("Assumptions", "Macro", "IS", "BS", "CF", "Ratios",
-                         "Schedules", "Rev_Reconcile", "Val_", "Quarterly")
+FROZEN_SHEET_PREFIXES = ("Model", "Assumptions", "Macro", "IS", "BS", "CF",
+                         "Ratios", "Schedules", "Rev_Reconcile", "Val_",
+                         "Quarterly")
+
+# Ratios completeness contract (check F13): these labels must exist in the
+# Ratios section — build_ratios() writes exactly these, so builder output
+# passes by construction and a lazy hand-built Ratios fails.
+REQUIRED_RATIO_LABELS = (
+    "Margen neto", "Rotacion de activos", "Apalancamiento", "ROE DuPont 3",
+    "Carga fiscal", "Carga de interes", "Margen EBIT", "ROE DuPont 5",
+    "NOPAT", "Capital invertido", "ROIC", "Economic profit",
+    "Margen bruto", "Margen operativo", "Razon corriente", "Quick ratio",
+    "Deuda / EBITDA aprox", "Cobertura de intereses",
+    "DSO", "DIO", "DPO", "CCC",
+    "DFL", "CFO / NI", "Accruals",
+)
 
 JUNK_SHEET_NAMES = ("Hoja1", "Hoja2", "Sheet1", "Sheet2", "Hoja 1", "Sheet 1")
 
@@ -297,6 +311,118 @@ class ModelStyler:
     def label_col_width(self, ws: Worksheet, width: float = 42.0) -> None:
         ws.column_dimensions["A"].width = width
 
+    def quarter_header(self, ws: Worksheet, row: int, first_col: int,
+                       quarters: list[str]) -> int:
+        """Mixed-granularity header, short-term quarters ('1Q2026E') before the
+        annual A/E years. Returns the next free column."""
+        col = first_col
+        for label in quarters:
+            cell = ws.cell(row=row, column=col, value=label)
+            cell.font = Font(name=FONT_NAME, size=11, bold=True)
+            cell.alignment = Alignment(horizontal="center")
+            col += 1
+        return col
+
+    # -- Ratios section (deterministic; fixes the "lazy ratios" failure) -----
+
+    def build_ratios(self, ws: Worksheet, start_row: int, first_col: int,
+                     n_cols: int, ref: dict[str, str],
+                     wacc_ref: Optional[str] = None) -> tuple[int, list[str]]:
+        """Write the FULL Ratios section (blocks A-G of ratios-analytics.md).
+
+        ``ref`` maps canon line -> absolute row reference WITHOUT column, e.g.
+        {"rev": "Model!{c}27", ...} where "{c}" is replaced per period column
+        and "{p}" by the previous column. Required canons: rev, cogs, gross,
+        ebit, ebt, ni, interest, tax, ta, equity, cash, ar, inv, ap, ca, cl,
+        debt, re, cfo, da. Missing canons skip their rows (returned in the
+        skipped list) — but check F13 fails if the section is incomplete, so
+        a skip is visible, never silent.
+        """
+        skipped: list[str] = []
+        r = start_row
+
+        def row_out(label: str, template: str, fmt: NumFmt,
+                    needs: tuple[str, ...]) -> None:
+            nonlocal r
+            if any(k not in ref for k in needs):
+                skipped.append(label)
+                return
+            ws.cell(row=r, column=1, value=label).font = Font(
+                name=FONT_NAME, size=11)
+            for i in range(1, n_cols):  # first period column has no prior year
+                col = get_column_letter(first_col + i)
+                prev = get_column_letter(first_col + i - 1)
+                parts = {k: v.replace("{c}", col).replace("{p}", prev)
+                         for k, v in ref.items()}
+                formula = template.format(**parts)
+                self.set_cell(ws, f"{col}{r}", formula, CellRole.FORMULA, fmt)
+            r += 1
+
+        def header(title: str) -> None:
+            nonlocal r
+            self.section_header(ws, r, title)
+            r += 1
+
+        AVG = "AVERAGE({p_ref},{c_ref})"
+
+        def avg(canon: str) -> dict[str, str]:
+            return {}
+
+        header("DuPont")
+        row_out("Margen neto (NI/Ventas)", '=IF({rev}=0,"",{ni}/{rev})', NumFmt.PCT1, ("ni", "rev"))
+        row_out("Rotacion de activos (Ventas/Activos prom.)",
+                '=IF(AVERAGE({ta_p},{ta})=0,"",{rev}/AVERAGE({ta_p},{ta}))', NumFmt.DEC2, ("rev", "ta", "ta_p"))
+        row_out("Apalancamiento (Activos/Capital prom.)",
+                '=IF(AVERAGE({eq_p},{equity})=0,"",AVERAGE({ta_p},{ta})/AVERAGE({eq_p},{equity}))', NumFmt.DEC2, ("ta", "ta_p", "equity", "eq_p"))
+        row_out("ROE DuPont 3", '=IF(AVERAGE({eq_p},{equity})=0,"",{ni}/AVERAGE({eq_p},{equity}))', NumFmt.PCT1, ("ni", "equity", "eq_p"))
+        row_out("Carga fiscal (NI/EBT)", '=IF({ebt}=0,"",{ni}/{ebt})', NumFmt.PCT1, ("ni", "ebt"))
+        row_out("Carga de interes (EBT/EBIT)", '=IF({ebit}=0,"",{ebt}/{ebit})', NumFmt.PCT1, ("ebt", "ebit"))
+        row_out("Margen EBIT (EBIT/Ventas)", '=IF({rev}=0,"",{ebit}/{rev})', NumFmt.PCT1, ("ebit", "rev"))
+        row_out("ROE DuPont 5 (producto)",
+                '=IF(OR({ebt}=0,{ebit}=0,{rev}=0,AVERAGE({eq_p},{equity})=0),"",'
+                '{ni}/{ebt}*{ebt}/{ebit}*{ebit}/{rev}*{rev}/AVERAGE({ta_p},{ta})'
+                '*AVERAGE({ta_p},{ta})/AVERAGE({eq_p},{equity}))', NumFmt.PCT1,
+                ("ni", "ebt", "ebit", "rev", "ta", "ta_p", "equity", "eq_p"))
+        r += 1
+
+        header("ROIC y economic profit")
+        row_out("Tasa efectiva (tax/EBT)", '=IF({ebt}=0,"",{tax}/{ebt})', NumFmt.PCT1, ("tax", "ebt"))
+        row_out("NOPAT (EBIT x (1-t))", '=IF({ebt}=0,"",{ebit}*(1-{tax}/{ebt}))', NumFmt.NUM, ("ebit", "tax", "ebt"))
+        row_out("Capital invertido (deuda+capital-caja)", "={debt}+{equity}-{cash}", NumFmt.NUM, ("debt", "equity", "cash"))
+        row_out("ROIC", '=IF(({debt}+{equity}-{cash})=0,"",IF({ebt}=0,"",{ebit}*(1-{tax}/{ebt})/({debt}+{equity}-{cash})))', NumFmt.PCT1, ("debt", "equity", "cash", "ebit", "tax", "ebt"))
+        if wacc_ref:
+            row_out(f"Economic profit (spread vs WACC {wacc_ref})",
+                    '=IF({ebt}=0,"",({ebit}*(1-{tax}/{ebt})/MAX(1,{debt}+{equity}-{cash})-' + wacc_ref + ')*({debt}+{equity}-{cash}))',
+                    NumFmt.NUM, ("ebit", "tax", "ebt", "debt", "equity", "cash"))
+        else:
+            skipped.append("Economic profit (sin wacc_ref)")
+        r += 1
+
+        header("Rentabilidad, liquidez y solvencia")
+        row_out("Margen bruto", '=IF({rev}=0,"",{gross}/{rev})', NumFmt.PCT1, ("gross", "rev"))
+        row_out("Margen operativo", '=IF({rev}=0,"",{ebit}/{rev})', NumFmt.PCT1, ("ebit", "rev"))
+        row_out("Razon corriente", '=IF({cl}=0,"",{ca}/{cl})', NumFmt.DEC2, ("ca", "cl"))
+        row_out("Quick ratio", '=IF({cl}=0,"",({ca}-{inv})/{cl})', NumFmt.DEC2, ("ca", "cl", "inv"))
+        row_out("Deuda / EBITDA aprox (EBIT+D&A)", '=IF(({ebit}+{da})=0,"",{debt}/({ebit}+{da}))', NumFmt.DEC2, ("debt", "ebit", "da"))
+        row_out("Cobertura de intereses (EBIT/interes)", '=IF({interest}=0,"n/a",{ebit}/ABS({interest}))', NumFmt.DEC2, ("ebit", "interest"))
+        r += 1
+
+        header("Ciclo de conversion de efectivo")
+        row_out("DSO (dias)", '=IF({rev}=0,"",AVERAGE({ar_p},{ar})/{rev}*DAYS_YEAR)', NumFmt.DEC2, ("ar", "ar_p", "rev"))
+        row_out("DIO (dias)", '=IF({cogs}=0,"",AVERAGE({inv_p},{inv})/{cogs}*DAYS_YEAR)', NumFmt.DEC2, ("inv", "inv_p", "cogs"))
+        row_out("DPO (dias)", '=IF({cogs}=0,"",AVERAGE({ap_p},{ap})/{cogs}*DAYS_YEAR)', NumFmt.DEC2, ("ap", "ap_p", "cogs"))
+        row_out("CCC (DSO+DIO-DPO)",
+                '=IF({cogs}=0,"",AVERAGE({ar_p},{ar})/{rev}*DAYS_YEAR+AVERAGE({inv_p},{inv})/{cogs}*DAYS_YEAR-AVERAGE({ap_p},{ap})/{cogs}*DAYS_YEAR)',
+                NumFmt.DEC2, ("ar", "ar_p", "inv", "inv_p", "ap", "ap_p", "rev", "cogs"))
+        r += 1
+
+        header("Apalancamiento operativo y calidad")
+        row_out("DFL (EBIT/(EBIT-interes))", '=IF(({ebit}-ABS({interest}))=0,"",{ebit}/({ebit}-ABS({interest})))', NumFmt.DEC2, ("ebit", "interest"))
+        row_out("CFO / NI (calidad de utilidades)", '=IF({ni}=0,"",{cfo}/{ni})', NumFmt.DEC2, ("cfo", "ni"))
+        row_out("Accruals proxy (NI-CFO)/Activos prom.",
+                '=IF(AVERAGE({ta_p},{ta})=0,"",({ni}-{cfo})/AVERAGE({ta_p},{ta}))', NumFmt.PCT1, ("ni", "cfo", "ta", "ta_p"))
+        return r, skipped
+
 
 # ---------------------------------------------------------------------------
 # Checks F — format audit (deterministic, any workbook)
@@ -431,14 +557,15 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
                  if ws.title.startswith(FROZEN_SHEET_PREFIXES) and not ws.freeze_panes]
     findings.append(Finding("F6 freeze panes", not no_freeze,
                             ", ".join(no_freeze) or "ok"))
-    # F7 outline grouping in Schedules
-    sched = next((ws for ws in visible if ws.title == "Schedules"), None)
-    if sched is None:
-        findings.append(Finding("F7 outline en Schedules", False, "tab Schedules no existe"))
+    # F7 outline grouping: en la tab Model (secciones apiladas) o en Schedules
+    host = next((ws for ws in visible if ws.title in ("Model", "Schedules")), None)
+    if host is None:
+        findings.append(Finding("F7 outline en Model/Schedules", False,
+                                "ni tab Model ni Schedules existen"))
     else:
-        grouped = sum(1 for d in sched.row_dimensions.values() if d.outlineLevel)
-        findings.append(Finding("F7 outline en Schedules", grouped > 0,
-                                f"{grouped} filas agrupadas"))
+        grouped = sum(1 for d in host.row_dimensions.values() if d.outlineLevel)
+        findings.append(Finding("F7 outline en Model/Schedules", grouped > 0,
+                                f"{host.title}: {grouped} filas agrupadas"))
     # F8 no junk sheets, no Sch_* sheets
     junk = [n for n in wb.sheetnames if n in JUNK_SHEET_NAMES or n.startswith("Sch_")]
     findings.append(Finding("F8 sin hojas basura/Sch_*", not junk,
@@ -459,7 +586,70 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
     findings.append(Finding("F11 continuidad de series", not all_violations,
                             "; ".join(all_violations[:8]) or
                             "filas de input completas en todo el horizonte"))
+    # F12 series partidas: fila etiquetada "forecast"/"historico" con solo una
+    # mitad del horizonte poblada = la serie se partio en dos filas (violacion
+    # de "una serie = una fila"; el patron exacto del smoke AAPL)
+    split_hits: list[str] = []
+    for ws in visible:
+        split_hits.extend(_split_series_violations(ws))
+    findings.append(Finding("F12 sin series partidas", not split_hits,
+                            "; ".join(split_hits[:8]) or
+                            "ninguna fila hist/forecast partida"))
+    # F13 completitud de Ratios: la seccion Ratios contiene el set del spec
+    labels_found: set[str] = set()
+    for ws in visible:
+        if ws.title not in ("Model", "Ratios"):
+            continue
+        for row in ws.iter_rows(min_col=1, max_col=1,
+                                max_row=min(ws.max_row, _MAX_SCAN_ROWS)):
+            v = row[0].value
+            if isinstance(v, str):
+                for req in REQUIRED_RATIO_LABELS:
+                    if req.lower() in v.lower():
+                        labels_found.add(req)
+    missing_ratios = [x for x in REQUIRED_RATIO_LABELS if x not in labels_found]
+    findings.append(Finding("F13 completitud de Ratios", not missing_ratios,
+                            ("faltan: " + ", ".join(missing_ratios[:8]) +
+                             (" ..." if len(missing_ratios) > 8 else ""))
+                            if missing_ratios else
+                            f"{len(REQUIRED_RATIO_LABELS)} razones presentes"))
     return findings
+
+
+def _split_series_violations(ws: Worksheet) -> list[str]:
+    """F12: label contiene 'forecast' u 'historico' y solo su mitad esta llena."""
+    period_cols_a: list[int] = []
+    period_cols_e: list[int] = []
+    for row in ws.iter_rows(min_row=1, max_row=min(ws.max_row, 8),
+                            max_col=min(ws.max_column, _MAX_SCAN_COLS)):
+        for c in row:
+            if c.value is None:
+                continue
+            if c.number_format == NumFmt.YEAR_A.value:
+                period_cols_a.append(c.column)
+            elif c.number_format == NumFmt.YEAR_E.value:
+                period_cols_e.append(c.column)
+        if period_cols_a and period_cols_e:
+            break
+    if not period_cols_a or not period_cols_e:
+        return []
+    hits: list[str] = []
+    for r in range(1, min(ws.max_row, _MAX_SCAN_ROWS) + 1):
+        label = ws.cell(row=r, column=1).value
+        if not isinstance(label, str):
+            continue
+        low = label.lower()
+        is_fc = "forecast" in low
+        is_hist = "historico" in low or "histórico" in low
+        if not (is_fc or is_hist):
+            continue
+        a_vals = sum(1 for c in period_cols_a if ws.cell(row=r, column=c).value is not None)
+        e_vals = sum(1 for c in period_cols_e if ws.cell(row=r, column=c).value is not None)
+        if is_fc and e_vals >= 2 and a_vals == 0:
+            hits.append(f"{ws.title}!fila {r} (solo forecast)")
+        if is_hist and a_vals >= 2 and e_vals == 0:
+            hits.append(f"{ws.title}!fila {r} (solo historico)")
+    return hits
 
 
 def _print_report(findings: Iterable[Finding]) -> int:
@@ -498,6 +688,10 @@ def _demo(path: str) -> None:
     styler.series_row(assum, 6, "Crecimiento unidades (%)", 3,
                       hist_values=[0.05] * 7, forecast_values=[0.04] * 6,
                       numfmt=NumFmt.PCT1)
+    ratios = styler.wb["Ratios"]
+    for i, label in enumerate(REQUIRED_RATIO_LABELS):
+        ratios.cell(row=5 + i, column=1, value=label).font = Font(
+            name=FONT_NAME, size=11)
     styler.save(path)
     print(f"[ok] demo escrito: {path}")
 

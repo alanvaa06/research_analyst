@@ -66,9 +66,10 @@ todo queda escrito en un diario de tesis:
    (precio × volumen, tiendas × venta por tienda…) ANTES de abrir Excel. Es el
    debate central del proceso.
 6. **Construcción del modelo** (`model-standards` + `xlsx-building`) — genera
-   el Excel con formato de código, no de criterio: una sola tab de schedules,
-   ratios y DuPont, valuación por varios métodos, y ~30 checks automáticos de
-   integridad y formato que deben salir verdes.
+   el Excel con formato de código, no de criterio: el modelo completo vive en
+   UNA hoja con secciones colapsables (supuestos, estados financieros, DCF,
+   razones financieras, schedules), estimación trimestral del año en curso si
+   la pediste, y ~35 checks automáticos de integridad y formato en verde.
 7. **Poblar el forecast** (`driver-inventory`, segunda pasada) — el analista
    pone cada número viendo su serie histórica al lado; el asistente contrasta
    contra el guidance y registra las diferencias.

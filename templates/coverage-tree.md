@@ -6,14 +6,15 @@ Cuatro categorías: **inputs** (lo que entra) / **config** / **outputs** (lo que
 el pipeline produce) / **registro** (memoria append-only). Archivos-contrato
 únicos viven en la RAÍZ del ticker — un archivo no gana carpeta.
 
-**`workspace/` es un nombre ilustrativo**: significa LA carpeta que el usuario
-designó como raíz de sus coberturas (ej. `Valuation_Records/`). JAMÁS crear
-una subcarpeta literal llamada `workspace` dentro de ella — `macro/` y los
-tickers van directo en la raíz designada.
+**La raíz es la carpeta que el usuario designó** (aquí ejemplificada como
+`Valuation_Records/`; puede llamarse como sea). `macro/` y los tickers van
+DIRECTO en ella: `Valuation_Records/AAPL/`, `Valuation_Records/AMZN/`,
+`Valuation_Records/macro/`. JAMÁS crear una subcarpeta intermedia
+(`workspace/`, `coberturas/`, etc.).
 
 ```
-workspace/
-├── macro/                        # TODO lo macro — compartido; SOLO a nivel workspace
+Valuation_Records/                # <- la carpeta raiz del usuario, su nombre
+├── macro/                        # TODO lo macro — compartido; SOLO en la raiz
 │   ├── macro-view.yaml           # VIGENTE, nombre fijo (lo consume código);
 │   │                             #   dentro de un ticker es violación de contrato
 │   ├── sources/                  # research macro del analista y de terceros
@@ -99,8 +100,8 @@ Solo movimientos, nada se borra (Standard V(C)):
 `profile/issuer-profile.yaml` → raíz · `assumptions/driver-map.md` → raíz ·
 `notes/industry-report.md` → `research/` · `notes/thesis-journal.md` →
 `journal/` · `log/*` → `journal/` · `earnings-transcripts/` → `transcripts/` ·
-`macro-view.yaml` suelto (en workspace raíz o dentro de un ticker) →
-`workspace/macro/macro-view.yaml` (si ya existe uno ahí, preguntar cuál manda —
+`macro-view.yaml` suelto (en la raíz o dentro de un ticker) →
+`<raíz>/macro/macro-view.yaml` (si ya existe uno ahí, preguntar cuál manda —
 nunca resolver en silencio). Carpetas viejas vacías se eliminan al final
 (carpeta vacía no es dato).
 

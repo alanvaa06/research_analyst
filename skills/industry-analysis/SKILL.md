@@ -1,6 +1,6 @@
 ---
 name: industry-analysis
-description: Análisis de industria y mercado estilo CFA para una cobertura de equity — landscape competitivo, five forces de Porter, ciclo de vida de la industria, FODA, posicionamiento y universo de comparables; produce el reporte de industria que alimenta drivers, assumptions y tesis. Usa esta skill siempre que haya que analizar la industria de una emisora, mapear competidores, armar o refrescar un FODA, decidir el comp universe, evaluar posicionamiento competitivo o moats, o cuando el usuario diga "analiza la industria", "¿quiénes son los comparables?", "actualiza el landscape", "¿dónde compite esta emisora?".
+description: Análisis de industria y mercado estilo CFA para una cobertura de equity — landscape competitivo, five forces de Porter, ciclo de vida, FODA, posicionamiento y universo de comparables; produce reportes FECHADOS en research/industry/ (vigente = más reciente, historia completa) y en refresh genera el diff sección por sección contra la versión anterior; considera el research propio y de terceros que el analista deje en research/industry/sources/. Usa esta skill siempre que haya que analizar la industria de una emisora, mapear competidores, armar o refrescar un FODA, decidir el comp universe, evaluar posicionamiento o moats, comparar cómo cambió la industria desde el último reporte, o cuando el usuario diga "analiza la industria", "¿quiénes son los comparables?", "actualiza el landscape", "¿qué cambió en el sector?", "¿dónde compite esta emisora?".
 ---
 
 # industry-analysis
@@ -58,6 +58,18 @@ etapa siguiente se DERIVAN de la economía de industria que esta skill establece
    Bloque que va a assumptions: crecimiento de mercado, participación, precios
    sectoriales — cada uno con fuente o marcado supuesto
 ```
+
+## Formato del diff (refresh vía /update-industry)
+
+Tabla sección por sección; solo filas con cambio real. La columna "¿toca el
+modelo?" es la que consume impact-triage — sin ella el diff es lectura, no
+pipeline:
+
+| § | Antes | Ahora | Fuente del cambio | ¿Toca el modelo? |
+|---|---|---|---|---|
+| 2. Ciclo | crecimiento mercado 8% | 5% (desaceleración e-commerce) | reporte X p.4 (`sources/`) | SÍ — ruta top-down de revenue |
+| 6. Comps | 5 tickers | +SHOP, −SSNLF | filing SHOP 10-K | SÍ — regenerar snapshot |
+| 4. Posicionamiento | sin cambio | — | — | no |
 
 ## Contratos de salida
 

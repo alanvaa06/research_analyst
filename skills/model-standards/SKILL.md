@@ -1,6 +1,6 @@
 ---
 name: model-standards
-description: Estándar del modelo 3 estados del plugin — construye el xlsx (estructura, convenciones Excel base CFI, checks de integridad, pestañas de valuación determinista y comps) y lo audita. Usa esta skill siempre que haya que construir un modelo financiero en Excel, correr o verificar checks de integridad (balance, tie-out de caja, reconciliación de revenue), armar pestañas de valuación (DCF, comps, DDM, NAV/AFFO, SOTP), auditar un modelo existente contra convenciones, o cuando el usuario pida "construye el modelo", "revisa mi modelo", "corre los checks", "arma la valuación" — aunque el modelo no lo haya creado este plugin.
+description: Estándar del modelo 3 estados del plugin — construye el xlsx completo (tab única Schedules con bloques, tab Ratios con DuPont/ROIC/CCC, valuación determinista con terminal dual, reverse DCF y múltiplos justificados, históricos poblados desde la capa de captura model/inputs/) vía el builder determinista, corre la lista completa de ~30 checks S/C/D/F, y audita o RECONSTRUYE cualquier modelo existente al estándar con paridad de números. Usa esta skill siempre que haya que construir un modelo financiero en Excel, correr o verificar checks de integridad (balance, tie-out, reconciliación de revenue, formato), armar pestañas de valuación (DCF, comps, DDM, NAV/AFFO, SOTP, Ratios), auditar o migrar un modelo existente, o cuando el usuario pida "construye el modelo", "revisa mi modelo", "corre los checks", "arma la valuación", "reconstruye mi Excel al estándar" — aunque el modelo no lo haya creado este plugin.
 ---
 
 # model-standards
@@ -45,7 +45,10 @@ Falta un contrato → detente y repórtalo; no construyas parcial ni inventes el
    bloques; la tab `Rev_Reconcile` cruza bottom-up vs top-down.
 4. Tab `Ratios` (core, solo fórmulas) según `references/ratios-analytics.md`:
    DuPont, ROIC/economic profit, ratios estándar, CCC, DOL/DFL/DTL, screening de
-   crédito (solo non_financial), calidad de utilidades.
+   crédito (solo non_financial), calidad de utilidades. Si
+   `model_periodicity: annual_plus_quarterly`: tab `Quarterly` (captura
+   observada + LTM + actual-vs-estimado; cross-foot C8) — trimestres JAMÁS
+   mezclados en las tabs anuales.
 5. Pestañas de valuación según métodos activos — fórmulas y convenciones exactas en
    `references/valuation-conventions.md` (incluye bloque Hamada, reverse DCF y
    múltiplos justificados + PVGO). Usuario en el loop en cada supuesto.

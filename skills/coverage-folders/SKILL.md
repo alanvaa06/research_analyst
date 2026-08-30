@@ -1,6 +1,6 @@
 ---
 name: coverage-folders
-description: Estructura de carpetas y archivado de filings SEC/BMV para una cobertura de equity — instancia el árbol estándar por emisora, aplica la convención de nombres, detecta filings faltantes y archiva documentos nuevos (10-K, 10-Q, 8-K, reportes BMV, eventos relevantes). Usa esta skill siempre que haya que crear la estructura de una cobertura nueva, archivar o renombrar un filing, organizar documentos de una emisora, o cuando el usuario diga "archiva este 10-Q", "organiza estos filings", "crea la carpeta de la emisora", "¿qué documentos me faltan?".
+description: Estructura de carpetas y archivado para una cobertura de equity — instancia el árbol estándar v2 por emisora (contratos en raíz, research/ fechado, journal/ append-only, macro/ a nivel workspace), aplica la convención de nombres, detecta filings faltantes, archiva documentos nuevos (10-K, 10-Q, 8-K, BMV, eventos relevantes, transcripts de earnings calls), renombra lo descargado por sec_fetch a la convención FY/#Q, y migra coberturas del árbol v1 al v2. Usa esta skill siempre que haya que crear la estructura de una cobertura nueva, archivar o renombrar cualquier documento, organizar carpetas de una emisora, migrar una cobertura vieja, o cuando el usuario diga "archiva este 10-Q", "organiza estos filings", "crea la carpeta de la emisora", "¿qué documentos me faltan?", "migra mi cobertura al árbol nuevo".
 ---
 
 # coverage-folders
@@ -48,10 +48,21 @@ carpetas viejas vacías se eliminan al final; reportar cada movimiento.
 
 ## Procedimiento — archivado (mantenimiento)
 
-1. Identifica tipo y periodo del documento nuevo.
+1. Identifica tipo y periodo del documento nuevo. Sin periodo identificable en
+   nombre ni contenido visible ⇒ PREGUNTA — adivinar el periodo corrompe el
+   retrieval de todo el pipeline (statement-mapper cita por nombre de archivo).
 2. Anti-duplicado: ¿ya existe ese periodo? Corrección de la emisora ⇒ conservar
    ambos, nuevo con sufijo `_amended`.
 3. Renombra, coloca, reporta ruta final.
+
+**Ejemplo** — entrada suelta → destino:
+
+| El usuario entrega | Queda como |
+|---|---|
+| `q3 apple.pdf` (10-Q del 3T fiscal 2026) | `filings/sec/10-Q/AAPL_10-Q_3Q2026.pdf` |
+| `earnings call jul.pdf` | `transcripts/AAPL_transcript_3Q2026.pdf` |
+| `nota MS sobre cloud.pdf` | `research/industry/sources/` (nombre original — sources no se renombran, se citan por archivo) |
+| deck macro de la casa | `workspace/macro/sources/` |
 
 ## Procedimiento — renombrado desde sec_fetch
 

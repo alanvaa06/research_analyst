@@ -10,7 +10,11 @@ Gates de usuario en cada transición + protocolo de debate
 1. Ticker identificado y sin cobertura previa en el workspace (colisión ⇒ preguntar,
    nunca sobrescribir).
 2. Folders del usuario existen y contienen filings legibles. Listar qué se encontró
-   y qué falta (mínimo: último anual; ideal: + trimestrales del año).
+   y qué falta (mínimo: último anual; ideal: + trimestrales del año). Transcripts
+   de earnings calls: si están, se listan como encontrados y SE CONSIDERAN
+   (statement-mapper los lee como fuente de guidance — no son opcionales una vez
+   presentes). `brand/DESIGN.md` presente ⇒ xlsx-building lo usará para los
+   colores de marca del modelo.
 3. Marco contable inferible del filing — si ambiguo, preguntar antes de crear perfil.
 4. Herramienta determinista para xlsx disponible (openpyxl o equivalente) — sin
    ella no se construye modelo.

@@ -13,6 +13,11 @@ las best practices escritas y entregó Calibri con gridlines).
 
 ## Procedimiento
 
+0. **Marca**: si existe `brand/DESIGN.md` en la cobertura, cárgalo con
+   `load_brand(path)` y pásalo a `ModelStyler(brand=...)` — rebrandea SOLO los
+   3 slots decorativos (primary/section/accent). Los colores semánticos (azul
+   input, verde link, rojo warn, fills) jamás cambian. El audit se corre con el
+   mismo archivo: `python tools/xlsx_builder.py audit <modelo> brand/DESIGN.md`.
 1. **Scaffold**: instancia `ModelStyler` (fija calc auto + sello F10). Crea cada
    tab con `new_sheet` (gridlines off + freeze), `brand_bar`, `label_col_width`,
    `period_header` (sufijos A/E). Tabs y orden: `templates/model-spec.md`.

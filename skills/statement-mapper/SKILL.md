@@ -30,6 +30,12 @@ model-standards) y **no mueve archivos** (eso es coverage-folders).
    rangos que da la administración (guidance del press release, del call, del MD&A)
    = `guidance` — NUNCA se capturan como observado. Doctrina: del management,
    priorizar lo cuantitativo verificable.
+5b. **Transcripts obligatorios si existen:** si `earnings-transcripts/` tiene el
+   transcript del periodo capturado, leerlo NO es opcional — extraer todo
+   guidance cuantitativo (rangos, metas, capex/margen/tax guiado, color por
+   segmento) etiquetado `guidance` con cita (transcript, sección/página). Es la
+   fuente de guidance más rica del periodo; alimenta el contraste de
+   driver-inventory y el triage.
 6. Anti-doble-captura: verifica contra lo ya capturado antes de escribir.
 
 ## Procedimiento — comp snapshot (modo ligero)

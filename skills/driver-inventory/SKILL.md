@@ -61,7 +61,8 @@ PIB (macro-view) × industria vs PIB (industry-report §2) × participación (§
 2. Flag de líneas sin driver que sigan forecasteadas "por inercia".
 3. Contraste vs guidance: donde el supuesto del analista difiere del guidance,
    registrar la diferencia y el porqué en `log/decisions.md` (es información de
-   tesis, no un error).
+   tesis, no un error). El guidance citable incluye lo extraído de
+   `earnings-transcripts/` por statement-mapper — citar transcript y periodo.
 
 ## Mantenimiento (`/update-quarter` paso 5) — calibración
 

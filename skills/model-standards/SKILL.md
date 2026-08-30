@@ -21,7 +21,7 @@ skill jamás genera un número.**
 
 | Input | De quién | Qué trae |
 |---|---|---|
-| Históricos mapeados con cita | `statement-mapper` | cifras `observado` por línea |
+| `model/inputs/canonical_*.csv` | `statement-mapper` | cifras `observado` por línea, con cita en los `extract_*.json`; el histórico del xlsx se puebla desde aquí (check C9) |
 | `driver-map.md` (raíz) | `driver-inventory` (design) | drivers clave + spec de schedules + doble ruta de revenue |
 | `issuer-profile.yaml` (raíz) | `framework-mapper` | marco, convenciones, métodos de valuación activos |
 | `macro-view.yaml` (workspace) | analista | rf, ERP, FX, decks — para tab Macro |

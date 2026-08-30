@@ -28,7 +28,13 @@ workspace/
     ├── brand/                    # CONFIG
     │   └── DESIGN.md             # opcional: colores de marca del analista (slots abajo)
     ├── model/                    # OUTPUTS
-    │   └── <ticker>-model_YYYY-MM-DD_v#.xlsx
+    │   ├── <ticker>-model_YYYY-MM-DD_v#.xlsx
+    │   └── inputs/               # capa de captura (statement-mapper escribe,
+    │       │                     #   model-standards consume; viaja con el modelo)
+    │       ├── canonical_annual.csv      # CONTRATO: series anuales observadas
+    │       ├── canonical_quarterly.csv   # CONTRATO: series trimestrales observadas
+    │       ├── consolidated_long.csv     # CONTRATO: formato tidy largo (todas)
+    │       └── extract_*.json            # papeles de trabajo por filing, con citas
     ├── research/                 # OUTPUTS: análisis
     │   └── industry-report.md    #   (+ notas y reportes futuros)
     └── journal/                  # REGISTRO append-only
@@ -36,6 +42,16 @@ workspace/
         ├── decisions.md          # observado / guidance / supuesto / output, con fecha
         └── forecast-accuracy.md  # calibración por driver entre trimestres
 ```
+
+### model/inputs/ — la capa de captura
+
+Los CSV canónicos son el CONTRATO máquina entre statement-mapper y
+model-standards; los `extract_*.json` son papeles de trabajo (citas por cifra:
+documento, página/nota, fecha). Columnas mínimas de los CSV: `line_item`,
+`period`, `value`, `source_doc`, `source_ref`, `tag` (observado/guidance).
+El histórico del xlsx se puebla DESDE los canónicos — check C9 verifica que
+coincidan. Regenerables desde los JSON; los JSON, desde los filings. Nada se
+teclea dos veces.
 
 ### Migración desde el árbol v1 (coberturas existentes)
 

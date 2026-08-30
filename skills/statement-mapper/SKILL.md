@@ -10,6 +10,15 @@ Su producto: cifras `observado` con cita exacta (documento, página/nota), mapea
 las líneas del `model-spec`. **No escribe en el xlsx** (entrega el mapeo a
 model-standards) y **no mueve archivos** (eso es coverage-folders).
 
+**Captura masiva vía XBRL (emisoras SEC):** `python tools/xbrl_fetch.py
+<TICKER> --dest model/inputs --ua "<nombre correo>"` baja TODA la historia
+reportada (anual y trimestral, décadas) desde companyfacts de SEC como CSV
+largo con periodo fiscal, form y filed — sin parsear HTML. Esta skill convierte
+ese CSV en los `canonical_*.csv` (mapeo canon → línea con gate del analista;
+4Q de flujos = FY − 1Q−2Q−3Q, marcado derivado). Preferir esta ruta a extraer
+trimestre por trimestre de 10-Qs; el filing HTML queda para lo que XBRL no trae
+(notas, segmentos, guidance).
+
 **Salida formal — `model/inputs/`** (dueña también de esta carpeta):
 - `extract_*.json`: papeles de trabajo por filing — cada cifra con valor,
   documento, página/nota, fecha.

@@ -56,5 +56,7 @@ SKILL.md); las demás solo leen.
   gratis; SIEMPRE con gate del usuario antes de descargar).
 - xlsx solo vía `tools/xlsx_builder.py` (skill xlsx-building) — nunca openpyxl
   crudo para estructura/formato; audit de formato: `python tools/xlsx_builder.py audit <modelo>`.
+- Historia financiera masiva de emisoras SEC: `python tools/xbrl_fetch.py <TICKER>`
+  (companyfacts XBRL — décadas de anuales y trimestrales sin parsear HTML).
 - Nada se borra en la carpeta de cobertura; retención mínima 7 años.
 - Documentación al usuario en español; nombres de archivos y skills en inglés.

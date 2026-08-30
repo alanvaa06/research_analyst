@@ -177,6 +177,12 @@ class ModelStyler:
         """Custom doc property proving builder provenance (check F10)."""
         self.wb.properties.keywords = f"{BUILDER_STAMP_KEY}={BUILDER_STAMP_VALUE}"
 
+    def set_periodicity(self, mode: str) -> None:
+        """Stamp the model's periodicity (issuer-profile) into the workbook so
+        check F14 can verify quarter columns without external context."""
+        self.wb.properties.keywords = (
+            f"{self.wb.properties.keywords or ''};periodicity={mode}")
+
     def define_constant(self, name: str, sheet: str, coord: str) -> None:
         """Named range for a labeled constant (e.g. DAYS_YEAR) — kills hardcodes."""
         from openpyxl.workbook.defined_name import DefinedName
@@ -613,6 +619,29 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
                              (" ..." if len(missing_ratios) > 8 else ""))
                             if missing_ratios else
                             f"{len(REQUIRED_RATIO_LABELS)} razones presentes"))
+    # F14 columnas trimestrales estimadas: si el sello dice periodicidad con
+    # trimestres, el header debe traer columnas #Q20yyE (el contrato 1a que el
+    # rebuild v3 se salto). Sin sello de periodicidad: n/a (modelo externo).
+    import re as _re
+    m = _re.search(r"periodicity=([a-z_]+)", kw)
+    if m and m.group(1) in ("annual_plus_quarterly", "quarterly"):
+        qcols = 0
+        for ws in visible:
+            if ws.title not in ("Model", "Quarterly"):
+                continue
+            for row in ws.iter_rows(min_row=1, max_row=8,
+                                    max_col=min(ws.max_column, 60)):
+                for c in row:
+                    if isinstance(c.value, str) and _re.fullmatch(
+                            r"[1-4]Q20\d\dE", c.value.strip()):
+                        qcols += 1
+        findings.append(Finding("F14 columnas trimestrales estimadas",
+                                qcols >= 4,
+                                f"{qcols} columnas #QyyE (perfil: {m.group(1)}; "
+                                "minimo 4)"))
+    else:
+        findings.append(Finding("F14 columnas trimestrales estimadas", True,
+                                "n/a (sin sello de periodicidad trimestral)"))
     return findings
 
 

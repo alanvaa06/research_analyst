@@ -72,6 +72,7 @@ externo se audita igual.
 | F11 | **Continuidad de series** | Una serie = UNA fila continua en todo el horizonte: histórico calculado/observado y forecast en la misma fila (el rol cambia por columna), jamás columnas históricas vacías. Detección: toda fila con ≥3 celdas de input (fill amarillo) en columnas de periodo debe tener TODAS las columnas de periodo pobladas. Requiere headers A/E (F9) para ubicar las columnas — F9 rojo deja F11 sin efecto |
 | F12 | **Sin series partidas** | Fila cuyo label contiene "forecast" con la mitad histórica (columnas A) vacía, o "histórico" con la mitad estimada (columnas E) vacía = la serie se partió en dos filas. Complementa F11 (que solo vigila filas de input); cacha el patrón exacto del smoke AAPL. Derivables hacia atrás (índices, ratios implícitos) se POBLAN por fórmula |
 | F13 | **Completitud de Ratios** | La sección Ratios contiene el set completo de razones del spec (`REQUIRED_RATIO_LABELS` en el código, ~25: DuPont 3/5 con cargas, NOPAT/ROIC/economic profit, márgenes, liquidez, solvencia, DSO/DIO/DPO/CCC, DFL, CFO/NI, accruals). `build_ratios` del builder las escribe por construcción; una Ratios armada a mano incompleta FALLA |
+| F14 | **Columnas trimestrales estimadas** | Si el sello del libro dice `periodicity=annual_plus_quarterly\|quarterly` (el builder lo estampa con `set_periodicity` desde el perfil — obligatorio en el scaffold), el header de `Model` debe traer ≥4 columnas `#Q20yyE`. Sin sello: n/a (modelo externo). Cacha el contrato 1a omitido |
 
 ## Reporte de /model-check
 

@@ -19,6 +19,9 @@ el formato y las reglas. Ningún gate se cierra sin su entrada en el journal.
    Máximo 2-3 rondas. El analista resuelve; el modelo jamás decide.
 4. **Registro.** Entrada append-only en `journal/thesis-journal.md` (formato abajo).
 
+Estilo en todo el protocolo: sobrio, sin emojis — estados `[ok]`/`[x]`/`[aviso]`,
+tono de nota de research (ver AGENTS.md §Estilo de reporte).
+
 ## Reglas duras
 
 - El modelo nunca inventa cifras ni citas para ganar el debate. Sin evidencia

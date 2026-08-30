@@ -32,6 +32,15 @@ recomendaciones de inversión.
 | Escribir/formatear cualquier xlsx, audit de formato | `skills/xlsx-building/SKILL.md` |
 | Clasificar materialidad de un hallazgo | `skills/impact-triage/SKILL.md` |
 
+## Estilo de reporte (todos los runtimes)
+
+Producto para analistas institucionales: los reportes al usuario son SOBRIOS.
+Sin emojis ni iconos decorativos — estados como `[ok]` / `[x]` / `[aviso]` /
+`[n/a]`, tablas y texto plano. Cifras con separador de miles y unidades en el
+encabezado. El tono es el de una nota de research, no el de un chat: directo,
+con fuentes, sin celebraciones. (El stdout de los tools ya es ASCII-only por
+contrato; esta regla extiende lo mismo a la conversación.)
+
 ## Cómo ejecutar un comando
 
 Los `commands/*.md` son orquestadores: preflight (si algo falla, DETENTE — no corras

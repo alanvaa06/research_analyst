@@ -66,6 +66,7 @@ externo se audita igual.
 | F8 | Sin hojas basura | Ninguna `Sch_*`, `Hoja1`, `Sheet1` (refuerza S9) |
 | F9 | Headers de periodo A/E | Formatos `0"A"` / `0"E"` presentes en la fila de años |
 | F10 | Sello del builder | Custom property `research_analyst_builder` presente — el modelo se construyó vía `tools/xlsx_builder.py`. En modelo externo: `[aviso]`, no falla |
+| F11 | **Continuidad de series** | Una serie = UNA fila continua en todo el horizonte: histórico calculado/observado y forecast en la misma fila (el rol cambia por columna), jamás filas "histórico" y "forecast" separadas ni columnas históricas vacías. Detección: toda fila con ≥3 celdas de input (fill amarillo) en columnas de periodo debe tener TODAS las columnas de periodo pobladas. Requiere headers A/E (F9) para ubicar las columnas — F9 rojo deja F11 sin efecto |
 
 ## Reporte de /model-check
 

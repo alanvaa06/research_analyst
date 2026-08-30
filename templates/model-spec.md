@@ -33,6 +33,9 @@ en `references/valuation-conventions.md`.
 - **Formato por código**: el libro se construye vía `tools/xlsx_builder.py`
   (skill xlsx-building); los checks F auditan paleta, fuentes, formatos,
   gridlines, freeze y outline.
+- **Una serie = una fila** (check F11): histórico calculado y forecast en la
+  misma fila, rol por columna; nunca filas separadas hist/forecast ni columnas
+  históricas vacías en drivers.
 - Bloques de `Schedules`: header `Sch: <nombre>` en col. A, filas del bloque
   agrupadas (outline) para colapsar; una fila en blanco entre bloques.
 - Un archivo por modelo; **cero links entre libros**.

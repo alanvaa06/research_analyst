@@ -21,7 +21,9 @@ las best practices escritas y entregó Calibri con gridlines).
    `group_rows` sobre el contenido — JAMÁS una hoja por schedule.
 3. **Contenido**: toda celda vía `set_cell` con su `CellRole` (INPUT / OBSERVED /
    FORMULA / LINK / WARN / LABEL) y `NumFmt` de la whitelist. El role fija color
-   y fill — no elijas colores.
+   y fill — no elijas colores. Series (drivers, líneas de estados): vía
+   `series_row` — histórico calculado y forecast en LA MISMA fila (check F11),
+   jamás filas hist/forecast separadas ni columnas históricas vacías.
 4. **Constantes**: 365, 1000 y similares como celdas etiquetadas en Assumptions
    con `define_constant` (`DAYS_YEAR`, `MM_TO_B`); las fórmulas referencian el
    named range, nunca el literal (check S4).

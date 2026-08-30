@@ -8,8 +8,13 @@ el pipeline produce) / **registro** (memoria append-only). Archivos-contrato
 
 ```
 workspace/
-├── macro-view.yaml               # house view compartido — SOLO aquí; instanciarlo
-│                                 # dentro de un ticker es violación de contrato
+├── macro/                        # TODO lo macro — compartido; SOLO a nivel workspace
+│   ├── macro-view.yaml           # VIGENTE, nombre fijo (lo consume código);
+│   │                             #   dentro de un ticker es violación de contrato
+│   ├── sources/                  # research macro del analista y de terceros
+│   │                             #   (pdf/html/md — insumo de /update-macro)
+│   └── history/
+│       └── macro-view_YYYY-MM-DD.yaml   # snapshot ANTES de cada actualización
 └── <TICKER>/
     ├── issuer-profile.yaml       # contrato raíz (framework-mapper)
     ├── driver-map.md             # contrato raíz (driver-inventory)
@@ -40,7 +45,9 @@ workspace/
     │       └── extract_*.json            # papeles de trabajo por filing, con citas
     ├── research/                 # OUTPUTS: análisis (versionado por fecha)
     │   ├── industry/
-    │   │   └── industry-report_YYYY-MM-DD.md   # vigente = fecha más reciente
+    │   │   ├── sources/          # research de industria del analista y de
+    │   │   │                     #   terceros (insumo de /update-industry)
+    │   │   └── industry-report_YYYY-MM-DD.md   # generados; vigente = más reciente
     │   └── notes/
     │       └── <ticker>-note_YYYY-MM-DD.md     # notas de inversión (etapa 7)
     └── journal/                  # REGISTRO append-only
@@ -58,6 +65,19 @@ más reciente**, nada se borra. Aplica a: `model/` (con `_v#` intra-día),
 `issuer-profile.yaml`): son documentos vivos con gate cuya historia queda en
 `journal/decisions.md` y thesis-journal — versionarlos duplicaría el journal.
 
+Excepción para artefactos consumidos por CÓDIGO (`macro/macro-view.yaml`): el
+vigente mantiene NOMBRE FIJO (los contratos y checks lo referencian por ruta) y
+la historia vive en `history/` como snapshots fechados escritos ANTES de cada
+actualización.
+
+### Fuentes de terceros (`macro/sources/`, `research/industry/sources/`)
+
+Research propio o de terceros en cualquier formato. **Si están, se consideran**
+(como transcripts). Regla de citado: dato duro extraído ⇒ `observado` con
+fuente = ese documento y página; opinión o estimación de tercero ⇒ se ATRIBUYE
+("<fuente> estima X") y jamás se convierte en supuesto del analista sin su
+decisión explícita en gate.
+
 ### model/inputs/ — la capa de captura
 
 Los CSV canónicos son el CONTRATO máquina entre statement-mapper y
@@ -74,9 +94,10 @@ Solo movimientos, nada se borra (Standard V(C)):
 `profile/issuer-profile.yaml` → raíz · `assumptions/driver-map.md` → raíz ·
 `notes/industry-report.md` → `research/` · `notes/thesis-journal.md` →
 `journal/` · `log/*` → `journal/` · `earnings-transcripts/` → `transcripts/` ·
-`macro-view.yaml` dentro del ticker → subirlo al workspace (si ya existe uno en
-workspace, preguntar cuál manda — nunca resolver en silencio). Carpetas viejas
-vacías se eliminan al final (carpeta vacía no es dato).
+`macro-view.yaml` suelto (en workspace raíz o dentro de un ticker) →
+`workspace/macro/macro-view.yaml` (si ya existe uno ahí, preguntar cuál manda —
+nunca resolver en silencio). Carpetas viejas vacías se eliminan al final
+(carpeta vacía no es dato).
 
 ## Convención de nombres de filings
 

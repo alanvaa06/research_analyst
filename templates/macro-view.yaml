@@ -1,9 +1,14 @@
 # macro-view.yaml — house view macro COMPARTIDO por toda la cobertura
-# Vive a nivel workspace, FUERA de las carpetas por emisora. Uno solo para todas.
-# Lo llena el analista: su view propio o el house view de su casa. El plugin lo
-# consume, nunca lo genera (v1). Cada valor lleva fuente y fecha — si la fuente es
-# pública oficial (Banxico, encuestas de expectativas, Fed SEP), etiqueta observado;
-# si es juicio propio o de la casa, etiqueta supuesto.
+# Vive en workspace/macro/macro-view.yaml (nombre fijo — lo consume código),
+# FUERA de las carpetas por emisora. Uno solo para todas.
+# Lo llena el analista. El plugin puede PROPONERLO desde macro/sources/
+# (/update-macro: propuesta campo por campo con cita, gate por campo) — pero
+# cada valor lo confirma el analista; el plugin jamás lo decide.
+# Antes de cada actualización: snapshot a macro/history/macro-view_YYYY-MM-DD.yaml.
+# Cada valor lleva fuente y fecha — si la fuente es pública oficial (Banxico,
+# encuestas de expectativas, Fed SEP), etiqueta observado; si es juicio propio
+# o de la casa, etiqueta supuesto; si viene de research de terceros, cita el
+# documento (opinión de tercero se atribuye, no se vuelve supuesto sin gate).
 
 updated_at: ""                # YYYY-MM-DD — preflight avisa si stale (> staleness_warn_months)
 owner: ""                     # analista o casa

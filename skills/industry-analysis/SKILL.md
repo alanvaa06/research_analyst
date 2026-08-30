@@ -24,7 +24,11 @@ etapa siguiente se DERIVAN de la economía de industria que esta skill establece
 - Filings de la emisora Y de sus competidores (sección de negocio, MD&A, segmentos).
 - Datos públicos (INEGI, reguladores sectoriales, cámaras) y web search de la
   plataforma si existe.
-- `macro-view.yaml` para el contraste industria vs ciclo macro.
+- `research/industry/sources/` — research del analista o de terceros (pdf/html/
+  md): **si está, se considera**. Dato duro ⇒ `observado` con documento y
+  página; opinión de tercero ⇒ atribuida ("<fuente> estima X"), jamás supuesto
+  del analista sin su gate.
+- `macro/macro-view.yaml` para el contraste industria vs ciclo macro.
 - **Etiquetado estricto:** hecho con fuente = `observado`; interpretación del
   analista (FODA, posicionamiento) = `supuesto`; lo que diga el management de
   cualquier emisora = `guidance`.

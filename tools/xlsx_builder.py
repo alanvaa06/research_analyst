@@ -233,8 +233,9 @@ class ModelStyler:
     def check_row(self, ws: Worksheet, row: int, first_col: int, n_cols: int,
                   formula_template: str) -> None:
         """Per-column check row near the top (frozen visible). Template uses {col}."""
-        label = ws.cell(row=row, column=1, value="Balance Sheet Check")
+        label = ws.cell(row=row, column=2, value="Balance Sheet Check")
         label.font = Font(name=FONT_NAME, size=11, bold=True)
+        self._nav_mark(ws, row)
         for i in range(n_cols):
             col_letter = get_column_letter(first_col + i)
             cell = ws.cell(row=row, column=first_col + i,
@@ -244,18 +245,27 @@ class ModelStyler:
 
     # -- row/cell level -----------------------------------------------------
 
+    def _nav_mark(self, ws: Worksheet, row: int) -> None:
+        """CFI navigation pattern: column A carries ONLY an 'x' on each header/
+        sub-header row, so Ctrl+arrow on column A jumps section to section.
+        Labels live in column B."""
+        c = ws.cell(row=row, column=1, value="x")
+        c.font = Font(name=FONT_NAME, size=8)
+
     def section_header(self, ws: Worksheet, row: int, title: str,
                        last_col: int = 18) -> None:
         """Section band (default orange), bold 14 — one per model section."""
         for col in range(1, last_col + 1):
             ws.cell(row=row, column=col).fill = PatternFill(
                 "solid", fgColor=self.color_section)
-        c = ws.cell(row=row, column=1, value=title)
+        c = ws.cell(row=row, column=2, value=title)
         c.font = Font(name=FONT_NAME, size=14, bold=True)
+        self._nav_mark(ws, row)
 
     def subsection(self, ws: Worksheet, row: int, title: str) -> None:
-        c = ws.cell(row=row, column=1, value=title)
+        c = ws.cell(row=row, column=2, value=title)
         c.font = Font(name=FONT_NAME, size=12, bold=True)
+        self._nav_mark(ws, row)
 
     def schedule_block_header(self, ws: Worksheet, row: int, name: str) -> None:
         """Header of one 'Sch: <name>' block inside the single Schedules sheet."""
@@ -284,7 +294,7 @@ class ModelStyler:
         forecast cells (blue input on yellow, or driver formula). The role
         switches at the boundary column; every horizon column gets a value.
         """
-        lab = ws.cell(row=row, column=1, value=label)
+        lab = ws.cell(row=row, column=2, value=label)
         lab.font = Font(name=FONT_NAME, size=11, color=Color.BLACK.value)
         col = first_col
         for value in hist_values:
@@ -315,7 +325,9 @@ class ModelStyler:
             ws.row_dimensions[r].hidden = hidden
 
     def label_col_width(self, ws: Worksheet, width: float = 42.0) -> None:
-        ws.column_dimensions["A"].width = width
+        """Column A = narrow navigation column ('x' markers); B = labels."""
+        ws.column_dimensions["A"].width = 2.5
+        ws.column_dimensions["B"].width = width
 
     def quarter_header(self, ws: Worksheet, row: int, first_col: int,
                        quarters: list[str]) -> int:
@@ -353,7 +365,7 @@ class ModelStyler:
             if any(k not in ref for k in needs):
                 skipped.append(label)
                 return
-            ws.cell(row=r, column=1, value=label).font = Font(
+            ws.cell(row=r, column=2, value=label).font = Font(
                 name=FONT_NAME, size=11)
             for i in range(1, n_cols):  # first period column has no prior year
                 col = get_column_letter(first_col + i)
@@ -606,13 +618,14 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
     for ws in visible:
         if ws.title not in ("Model", "Ratios"):
             continue
-        for row in ws.iter_rows(min_col=1, max_col=1,
+        for row in ws.iter_rows(min_col=1, max_col=2,
                                 max_row=min(ws.max_row, _MAX_SCAN_ROWS)):
-            v = row[0].value
-            if isinstance(v, str):
-                for req in REQUIRED_RATIO_LABELS:
-                    if req.lower() in v.lower():
-                        labels_found.add(req)
+            for cell in row:
+                v = cell.value
+                if isinstance(v, str):
+                    for req in REQUIRED_RATIO_LABELS:
+                        if req.lower() in v.lower():
+                            labels_found.add(req)
     missing_ratios = [x for x in REQUIRED_RATIO_LABELS if x not in labels_found]
     findings.append(Finding("F13 completitud de Ratios", not missing_ratios,
                             ("faltan: " + ", ".join(missing_ratios[:8]) +
@@ -665,6 +678,8 @@ def _split_series_violations(ws: Worksheet) -> list[str]:
     hits: list[str] = []
     for r in range(1, min(ws.max_row, _MAX_SCAN_ROWS) + 1):
         label = ws.cell(row=r, column=1).value
+        if not isinstance(label, str) or label.strip().lower() == "x":
+            label = ws.cell(row=r, column=2).value
         if not isinstance(label, str):
             continue
         low = label.lower()
@@ -719,7 +734,7 @@ def _demo(path: str) -> None:
                       numfmt=NumFmt.PCT1)
     ratios = styler.wb["Ratios"]
     for i, label in enumerate(REQUIRED_RATIO_LABELS):
-        ratios.cell(row=5 + i, column=1, value=label).font = Font(
+        ratios.cell(row=5 + i, column=2, value=label).font = Font(
             name=FONT_NAME, size=11)
     styler.save(path)
     print(f"[ok] demo escrito: {path}")

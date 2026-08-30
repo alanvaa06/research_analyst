@@ -220,6 +220,30 @@ class ModelStyler:
         if role is CellRole.INPUT:
             cell.fill = PatternFill("solid", fgColor=Color.INPUT_FILL.value)
 
+    def series_row(self, ws: Worksheet, row: int, label: str, first_col: int,
+                   hist_values: list[object], forecast_values: list[object],
+                   numfmt: NumFmt = NumFmt.NUM,
+                   hist_role: CellRole = CellRole.FORMULA,
+                   forecast_role: CellRole = CellRole.INPUT) -> None:
+        """ONE continuous row across the whole horizon (contract F11).
+
+        A series is never split into 'historical' and 'forecast' rows: the same
+        line carries computed/observed history (black or blue-observed) and then
+        forecast cells (blue input on yellow, or driver formula). The role
+        switches at the boundary column; every horizon column gets a value.
+        """
+        lab = ws.cell(row=row, column=1, value=label)
+        lab.font = Font(name=FONT_NAME, size=11, color=Color.BLACK.value)
+        col = first_col
+        for value in hist_values:
+            self.set_cell(ws, f"{get_column_letter(col)}{row}", value,
+                          hist_role, numfmt)
+            col += 1
+        for value in forecast_values:
+            self.set_cell(ws, f"{get_column_letter(col)}{row}", value,
+                          forecast_role, numfmt)
+            col += 1
+
     def subtotal_border(self, ws: Worksheet, row: int, first_col: int,
                         n_cols: int) -> None:
         for i in range(n_cols):
@@ -288,6 +312,46 @@ def _scan_fonts_fills_formats(ws: Worksheet) -> tuple[set[str], set[str], set[st
     return font_names, font_colors, fills, numfmts
 
 
+def _series_continuity_violations(ws: Worksheet) -> list[str]:
+    """F11: rows that look like input series must span the WHOLE horizon.
+
+    Period columns = columns whose header cell uses the 0"A"/0"E" year formats.
+    Any row with >= 3 input-filled cells among period columns is a series row;
+    a series row with empty period cells means history/forecast got split or
+    history was left unpopulated (the AAPL smoke-test failure pattern).
+    """
+    period_cols: list[int] = []
+    header_row: Optional[int] = None
+    for row in ws.iter_rows(min_row=1, max_row=min(ws.max_row, 8),
+                            max_col=min(ws.max_column, _MAX_SCAN_COLS)):
+        cols = [c.column for c in row
+                if c.number_format in (NumFmt.YEAR_A.value, NumFmt.YEAR_E.value)
+                and c.value is not None]
+        if len(cols) >= 4:
+            period_cols = cols
+            header_row = row[0].row
+            break
+    if not period_cols or header_row is None:
+        return []
+    violations: list[str] = []
+    for r in range(header_row + 1, min(ws.max_row, _MAX_SCAN_ROWS) + 1):
+        filled_inputs = 0
+        empties = 0
+        for col in period_cols:
+            cell = ws.cell(row=r, column=col)
+            is_input_fill = (cell.fill is not None
+                             and cell.fill.patternType == "solid"
+                             and getattr(cell.fill.fgColor, "rgb", None)
+                             == Color.INPUT_FILL.value)
+            if cell.value is not None and is_input_fill:
+                filled_inputs += 1
+            if cell.value is None:
+                empties += 1
+        if filled_inputs >= 3 and empties > 0:
+            violations.append(f"{ws.title}!fila {r} ({empties} celdas vacias)")
+    return violations
+
+
 def audit_format(path: str) -> list[Finding]:
     """Run checks F1-F10 on a workbook. Pure read; returns findings."""
     wb = load_workbook(path, data_only=False)
@@ -351,6 +415,13 @@ def audit_format(path: str) -> list[Finding]:
     stamped = BUILDER_STAMP_KEY in kw
     findings.append(Finding("F10 sello del builder", stamped,
                             kw if stamped else "sin sello (no construido por xlsx_builder)"))
+    # F11 series continuity: input-series rows span the whole horizon
+    all_violations: list[str] = []
+    for ws in visible:
+        all_violations.extend(_series_continuity_violations(ws))
+    findings.append(Finding("F11 continuidad de series", not all_violations,
+                            "; ".join(all_violations[:8]) or
+                            "filas de input completas en todo el horizonte"))
     return findings
 
 
@@ -385,6 +456,11 @@ def _demo(path: str) -> None:
         styler.group_rows(sched, row + 1, row + 4)
         styler.subtotal_border(sched, row + 4, 3, 13)
         row += 6
+    assum = styler.wb["Assumptions"]
+    styler.subsection(assum, 5, "Drivers (demo)")
+    styler.series_row(assum, 6, "Crecimiento unidades (%)", 3,
+                      hist_values=[0.05] * 7, forecast_values=[0.04] * 6,
+                      numfmt=NumFmt.PCT1)
     styler.save(path)
     print(f"[ok] demo escrito: {path}")
 

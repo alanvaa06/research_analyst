@@ -64,9 +64,25 @@ sub-sección; 14 bold sección; 16 bold título de hoja).
 | Fechas | `mm-dd-yy` |
 | Celda auxiliar invisible | `;;;` |
 
+## Continuidad histórico → forecast (check F11)
+
+- **Una serie = una fila.** Cada línea del modelo (revenue, driver, margen,
+  crecimiento) cruza TODO el horizonte en la misma fila: en columnas históricas
+  la celda es fórmula calculada u observado (negro / azul-observado), en
+  columnas forecast es input del analista (azul + amarillo) o fórmula de driver.
+  El rol cambia por columna en la frontera A/E — el color cuenta la historia.
+- Prohibido partir una serie en fila "histórico" y fila "forecast", y prohibido
+  dejar columnas históricas vacías en filas de driver: el histórico calculado
+  (ej. crecimiento % realizado) es la referencia visual contra la que el
+  analista teclea su forecast (patrón CFI: fila "Revenue Growth %" con
+  histórico calculado + forecast azul en la misma fila).
+- El builder lo implementa con `ModelStyler.series_row(hist_values,
+  forecast_values)` — roles por tramo, misma fila.
+
 ## Fórmulas
 
-- Una fórmula por fila, copiada idéntica en todos los periodos (check S5).
+- Una fórmula por fila, copiada idéntica en todos los periodos (check S5) —
+  entendido por tramo: el tramo histórico comparte una fórmula, el forecast otra.
 - Jamás números hard-coded en fórmulas (check S4). Constantes de conversión
   (365, 1000) viven como celdas etiquetadas en Assumptions con named range
   (`DAYS_YEAR`, `MM_TO_B`) creado por `ModelStyler.define_constant`.

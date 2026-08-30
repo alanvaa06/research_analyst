@@ -1,6 +1,6 @@
 ---
 name: statement-mapper
-description: Captura de estados financieros desde filings al modelo — extrae cada cifra con cita de fuente y página, la mapea a la línea estándar del model-spec, propone reclasificaciones, etiqueta guidance de management, y en modo ligero arma comp-snapshots de comparables. Usa esta skill siempre que haya que capturar históricos de un filing (10-K, 10-Q, reporte BMV), mapear un estado de resultados/balance/flujos al modelo, conciliar una línea contra la fuente, armar el snapshot de un comparable, o cuando el usuario diga "captura este trimestre", "mapea este PDF al modelo", "¿de dónde salió esta cifra?", "arma el snapshot de este comp".
+description: Captura de estados financieros desde filings a la capa de captura del modelo (model/inputs/ — CSVs canónicos + extracts JSON con cita) — extrae cada cifra con documento y página, la mapea a la línea estándar del model-spec, propone reclasificaciones, extrae el guidance cuantitativo de transcripts de earnings calls (obligatorio si están en transcripts/), y arma comp-snapshots fechados de comparables. Usa esta skill siempre que haya que capturar históricos de un filing (10-K, 10-Q, reporte BMV, press release de 8-K), mapear un estado de resultados/balance/flujos al modelo, conciliar una línea contra la fuente, extraer guidance de un call, armar el snapshot de un comparable, o cuando el usuario diga "captura este trimestre", "mapea este PDF al modelo", "¿de dónde salió esta cifra?", "¿qué guidance dio management?", "arma el snapshot de este comp".
 ---
 
 # statement-mapper
@@ -29,7 +29,16 @@ model-standards) y **no mueve archivos** (eso es coverage-folders).
 
 1. Lee el filing desde `filings/` (la ruta la da coverage-folders).
 2. Extrae estado por estado. **Cada cifra lleva: valor, documento, página o nota,
-   fecha.** Cifra sin cita no existe.
+   fecha.** Cifra sin cita no existe. Extrae con herramienta determinista sobre el
+   texto del filing (parseo, no memoria): una cifra "recordada" es una cifra
+   inventada aunque acierte.
+
+   **Ejemplo — una fila del CSV canónico** (columnas en coverage-tree §model/inputs):
+
+   ```
+   line_item,period,value,source_doc,source_ref,tag
+   total_net_sales,FY2025,391035,AAPL_10-K_FY2025.htm,"Consolidated Statements of Operations, p.28",observado
+   ```
 3. Mapea a las líneas del model-spec. La presentación de la emisora rara vez coincide
    1:1 — propone el mapeo y las reclasificaciones como PROPUESTA, con el racional.
 4. Gate: el usuario aprueba mapeo y reclasificaciones antes de entregar a
@@ -65,6 +74,9 @@ model-standards) y **no mueve archivos** (eso es coverage-folders).
 ## Reglas duras
 
 - Cifra sin cita = no capturada. Sin excepciones, ni "es obvia".
+- Documento ilegible (PDF escaneado sin texto, tabla rota): reporta el archivo y
+  las líneas afectadas como NO CAPTURADAS y sigue con el resto — jamás rellenes
+  el hueco estimando ni con datos de otra fuente sin decírselo al usuario.
 - No corregir la aritmética de la emisora en silencio: si la suma del filing no
   cuadra, se reporta como hallazgo (posible input de impact-triage), no se "arregla".
 - Períodos re-expresados o re-presentados por la emisora: capturar la versión más

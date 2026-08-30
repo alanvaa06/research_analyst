@@ -1,6 +1,6 @@
 ---
 name: driver-inventory
-description: Drivers y revenue build-up del modelo — diseña los drivers clave del negocio (precio de commodity, unidades, m², volumen/precio/mix) ANTES de construir el modelo, especifica los schedules que el xlsx debe tener, reconcilia la ruta bottom-up contra la top-down, y después puebla e itera el forecast con los valores del analista, contrasta contra guidance y lleva el registro de calibración. Usa esta skill siempre que haya que identificar los drivers de una emisora, armar el revenue build-up, revisar qué líneas del forecast no tienen driver explícito, contrastar forecast vs guidance, medir precisión actual-vs-estimado, o cuando el usuario diga "¿cuáles son los drivers?", "arma el build-up", "puebla el forecast", "¿qué tan bien estimé el trimestre?".
+description: Drivers y revenue build-up del modelo — diseña los drivers clave del negocio (precio de commodity, unidades, m², volumen/precio/mix, working capital por días) ANTES de construir el modelo, especifica los bloques de la tab Schedules, reconcilia la ruta bottom-up contra la top-down, y después puebla el forecast con los valores del analista (histórico calculado y forecast en LA MISMA fila), contrasta contra guidance citable (incluido el extraído de transcripts) y lleva el registro de calibración con sesgo por driver. Usa esta skill siempre que haya que identificar los drivers de una emisora, armar el revenue build-up, revisar qué líneas del forecast no tienen driver explícito, contrastar forecast vs guidance, medir precisión actual-vs-estimado, detectar sesgo sistemático del analista, o cuando el usuario diga "¿cuáles son los drivers?", "arma el build-up", "puebla el forecast", "¿qué tan bien estimé el trimestre?", "¿dónde difiero del guidance?".
 ---
 
 # driver-inventory
@@ -50,6 +50,14 @@ PIB (macro-view) × industria vs PIB (industry-report §2) × participación (§
 | Línea | Por qué no tiene | Plan |
 ```
 
+**Ejemplo de fila bien anclada** (el estándar a exigir):
+
+| Segmento | Driver físico | Driver de precio | Bloque | Ancla |
+|---|---|---|---|---|
+| iPhone | crecimiento de unidades (índice FY2025=100) | crecimiento de ASP | `Sch: iPhone` | industry-report §7 (mercado smartphones −2%/año) + guidance 1Q26 (transcript p.3: "low single digit units") |
+
+Una fila sin ancla es una opinión con formato de tabla — rechazarla en el gate.
+
 ## Pasada 2 — POPULATE (`/init-coverage` paso 7)
 
 1. Recorre el driver-map contra el modelo construido: **el analista pone cada
@@ -67,9 +75,11 @@ PIB (macro-view) × industria vs PIB (industry-report §2) × participación (§
 ## Mantenimiento (`/update-quarter` paso 5) — calibración
 
 1. Actual (recién capturado por statement-mapper) vs driver estimado, por driver.
-2. Append a `journal/forecast-accuracy.md`: driver, estimado, actual, error %, fecha.
-   Con historia suficiente, calcula sesgo por driver (¿siempre optimista en
-   volumen?).
+2. Append a `journal/forecast-accuracy.md`: driver, estimado, actual,
+   error % = (actual − estimado) / |actual|, fecha. Con ≥ 3 observaciones de un
+   driver, calcula el sesgo = promedio del error firmado — el SIGNO es el
+   hallazgo (¿siempre optimista en volumen? ¿siempre conservador en margen?),
+   la magnitud es el tamaño del problema.
 3. Ese sesgo documentado alimenta la entrevista adaptativa: el debate cita TU
    registro, no impresiones.
 

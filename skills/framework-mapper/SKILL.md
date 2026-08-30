@@ -1,6 +1,6 @@
 ---
 name: framework-mapper
-description: Regulación contable para el analista — deriva el marco de la emisora (IFRS, US GAAP, NIF o criterios CNBV) y escribe issuer-profile.yaml; mapea qué norma exacta gobierna qué línea del modelo y qué diferencias entre marcos cambian un forecast. Usa esta skill siempre que haya que crear o confirmar el perfil contable de una emisora, citar una norma (ASC, NIC/NIIF, NIF), comparar tratamiento contable entre marcos, ajustar comparabilidad entre emisoras de marcos distintos, o cuando el usuario pregunte "¿qué norma gobierna X?", "¿cambia mi forecast por diferencia contable?", "¿bajo qué marco reporta esta emisora?" — es la ÚNICA skill autorizada a emitir citas normativas.
+description: Regulación contable para el analista — deriva el marco de la emisora (IFRS, US GAAP, NIF o criterios CNBV), la periodicidad del modelo (anual / anual+trimestral / trimestral — siempre pregunta, jamás asume) y los métodos de valuación aplicables, y escribe issuer-profile.yaml; mapea qué norma exacta gobierna qué línea del modelo y qué diferencias entre marcos cambian un forecast. Usa esta skill siempre que haya que crear o confirmar el perfil de una emisora, citar una norma (ASC, NIC/NIIF, NIF), comparar tratamiento contable entre marcos, ajustar comparabilidad entre emisoras de marcos distintos, o cuando el usuario pregunte "¿qué norma gobierna X?", "¿cambia mi forecast por diferencia contable?", "¿bajo qué marco reporta esta emisora?" — es la ÚNICA skill autorizada a emitir citas normativas y a escribir el perfil.
 ---
 
 # framework-mapper
@@ -47,6 +47,20 @@ Para cada consulta ("¿qué norma gobierna arrendamientos aquí?"):
 3. Siempre reporta las tres piezas: **norma exacta por marco → línea del modelo que
    toca → ajuste que exige al analista.** Ese es el formato; una norma sin línea ni
    ajuste es trivia, no análisis.
+
+**Ejemplo del formato** (caso verificado en la reference):
+
+> **Norma:** arrendamientos — IFRS 16 (todo en balance) vs ASC 842 (operativos
+> con gasto lineal en resultado operativo).
+> **Línea que toca:** EBITDA — bajo IFRS 16 el gasto de renta se vuelve
+> depreciación + interés (EBITDA sube); bajo ASC 842 el gasto operativo se queda
+> arriba (EBITDA no cambia).
+> **Ajuste al analista:** en Val_Comps con universo mixto, fila de ajuste de
+> arrendamientos antes de comparar EV/EBITDA — sin ella el múltiplo IFRS 16 se
+> ve artificialmente barato.
+
+Por qué el formato importa: el analista no necesita saber la norma — necesita
+saber si su forecast o su comparación están rotos por ella.
 
 ## Diferencias que cambian un forecast (uso en pipeline)
 

@@ -1,6 +1,6 @@
 ---
 name: impact-triage
-description: Taxonomía de materialidad para hallazgos de equity research — clasifica cualquier hallazgo (diff de un filing nuevo, evento relevante, noticia, cambio normativo, movimiento macro) como crítico, relevante o cosmético, anclado a su impacto en la valuación y la tesis. Usa esta skill siempre que llegue un filing nuevo y haya que decidir qué importa, salga un evento relevante o noticia de la emisora, cambie una norma contable o un supuesto macro, o cuando el usuario pregunte "¿esto es material?", "¿qué cambia con este trimestre?", "¿me afecta este evento relevante?", "triage de este 8-K".
+description: Taxonomía de materialidad para hallazgos de equity research — clasifica cualquier hallazgo (diff de un filing nuevo, delta del diff de industria, evento relevante, noticia, cambio normativo, movimiento macro) como crítico, relevante o cosmético, anclado a su impacto en valuación y tesis vía las sensibilidades YA construidas del modelo; en hallazgos industriales recomienda /update-industry y en cambios macro corre triage TRANSVERSAL sobre todas las coberturas del workspace. Usa esta skill siempre que llegue un filing nuevo y haya que decidir qué importa, salga un evento relevante o noticia de la emisora, cambie una norma contable o un supuesto macro, se actualice el industry-report o el macro-view, o cuando el usuario pregunte "¿esto es material?", "¿qué cambia con este trimestre?", "¿me afecta este evento?", "triage de este 8-K".
 ---
 
 # impact-triage
@@ -34,8 +34,15 @@ con su porqué en `journal/decisions.md` (es señal de tesis, no corrección).
    la tesis? (thesis-journal) ¿cuánto movería la valuación? — la estimación de
    impacto usa las sensibilidades YA construidas en el modelo (data tables), nunca
    cálculo propio de la skill.
-3. Clasifica cada hallazgo con su racional en una tabla: hallazgo → nivel → por qué
-   → dónde pega (línea/driver/pestaña).
+3. Clasifica cada hallazgo con su racional en una tabla. Formato EXACTO (la
+   columna "impacto estimado" siempre cita la sensibilidad del modelo o dice
+   "no cuantificable aún" — nunca un número generado):
+
+   | Hallazgo | Nivel | Por qué | Dónde pega | Impacto estimado |
+   |---|---|---|---|---|
+   | GM% Products −180bps vs estimado | CRÍTICO | rompe driver de margen del driver-map | Sch: COGS → IS → valuación | −7% precio objetivo (data table WACC×g, fila margen) |
+   | Nuevo programa de recompras $110B | Relevante | cambia supuesto secundario de buyback | Sch: Buyback | pendiente de poblar |
+   | Cambio de auditor | Cosmético | sin contacto con tesis ni drivers | — | — |
 4. Entrega el triage ANTES de que nadie toque el modelo — el orden importa: primero
    saber qué importa, luego actualizar.
 

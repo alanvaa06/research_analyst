@@ -30,6 +30,9 @@ en `references/valuation-conventions.md`.
 - Periodos en columnas, líneas en filas; flujo top-to-bottom, left-to-right.
 - **Menos tabs, mejor**: schedules SIEMPRE como bloques dentro de `Schedules`, jamás
   tabs sueltas. El conteo de tabs del modelo es fijo; solo crecen los bloques.
+- **Formato por código**: el libro se construye vía `tools/xlsx_builder.py`
+  (skill xlsx-building); los checks F auditan paleta, fuentes, formatos,
+  gridlines, freeze y outline.
 - Bloques de `Schedules`: header `Sch: <nombre>` en col. A, filas del bloque
   agrupadas (outline) para colapsar; una fila en blanco entre bloques.
 - Un archivo por modelo; **cero links entre libros**.

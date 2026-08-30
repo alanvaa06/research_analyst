@@ -27,6 +27,7 @@ recomendaciones de inversión.
 | Analizar industria, competidores, FODA, comp universe | `skills/industry-analysis/SKILL.md` |
 | Identificar drivers, revenue build-up, poblar forecast, calibración | `skills/driver-inventory/SKILL.md` |
 | Construir el modelo xlsx, pestañas de valuación | `skills/model-standards/SKILL.md` |
+| Escribir/formatear cualquier xlsx, audit de formato | `skills/xlsx-building/SKILL.md` |
 | Clasificar materialidad de un hallazgo | `skills/impact-triage/SKILL.md` |
 
 ## Cómo ejecutar un comando
@@ -49,6 +50,7 @@ SKILL.md); las demás solo leen.
 
 - Sin APIs de pago ni keys privadas (v1). Fuentes: filings locales del usuario,
   datos públicos, web search de tu plataforma si existe.
-- xlsx solo con herramienta determinista (openpyxl o equivalente).
+- xlsx solo vía `tools/xlsx_builder.py` (skill xlsx-building) — nunca openpyxl
+  crudo para estructura/formato; audit de formato: `python tools/xlsx_builder.py audit <modelo>`.
 - Nada se borra en la carpeta de cobertura; retención mínima 7 años.
 - Documentación al usuario en español; nombres de archivos y skills en inglés.

@@ -156,7 +156,11 @@ responde a lenguaje natural, sobre coberturas del plugin o trabajo tuyo previo.
 
 Fronteras conocidas, cada una un PR bienvenido: bancos (Anexo 33 vs IFRS 9),
 aseguradoras (CNSF vs IFRS 17), citas NIF pendientes de fuente primaria,
-convención AFFO de FIBRAs, conector de datos para comps/macro, suite de evals.
+convención AFFO de FIBRAs, suite de evals, y **conectores de series macro**:
+FRED (tasas/CPI/PIB US + FX, API key gratuita vía env) y Banxico SIE (series
+MX, token gratuito) bajando a `macro/series/` como CSVs con manifest — mismo
+patrón que `tools/sec_fetch.py` — para que `/update-macro` proponga valores
+`observado` desde series de tiempo, no solo datos puntuales tecleados.
 Regla de la casa: toda cita normativa con fuente primaria o `[VERIFICAR]`.
 
 El diseño completo y el porqué de cada decisión: [`docs/architecture.md`](docs/architecture.md).

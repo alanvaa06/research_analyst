@@ -57,9 +57,11 @@ todo queda escrito en un diario de tesis:
    (IFRS / US GAAP / NIF), la periodicidad del modelo (anual, anual +
    trimestral, trimestral — siempre te pregunta) y los métodos de valuación
    que aplican. Tú confirmas cada derivación.
-3. **Captura de históricos** (`statement-mapper`) — extrae cada cifra de los
-   reportes con su cita (documento y página) y la deja en archivos canónicos.
-   Si hay transcripts de earnings calls, extrae el guidance — obligatorio.
+3. **Captura de históricos** (`statement-mapper`) — para emisoras SEC, décadas
+   de anuales y trimestrales en un comando (`tools/xbrl_fetch.py`, datos XBRL
+   oficiales); cada cifra queda con su cita en archivos canónicos, y tú
+   apruebas el mapeo. Si hay transcripts de earnings calls, extrae el
+   guidance — obligatorio.
 4. **Industria y mercado** (`industry-analysis`, en paralelo con 3) — Porter,
    FODA, ciclo de vida y el universo de comparables.
 5. **Diseño de drivers** (`driver-inventory`) — define QUÉ mueve los ingresos
@@ -69,7 +71,8 @@ todo queda escrito en un diario de tesis:
    el Excel con formato de código, no de criterio: el modelo completo vive en
    UNA hoja con secciones colapsables (supuestos, estados financieros, DCF,
    razones financieras, schedules), estimación trimestral del año en curso si
-   la pediste, y ~35 checks automáticos de integridad y formato en verde.
+   la pediste, columna de navegación estilo CFI, y ~40 checks automáticos de
+   integridad y formato en verde.
 7. **Poblar el forecast** (`driver-inventory`, segunda pasada) — el analista
    pone cada número viendo su serie histórica al lado; el asistente contrasta
    contra el guidance y registra las diferencias.

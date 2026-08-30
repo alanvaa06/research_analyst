@@ -2,13 +2,18 @@
 
 ## Workspace
 
+Cuatro categorías: **inputs** (lo que entra) / **config** / **outputs** (lo que
+el pipeline produce) / **registro** (memoria append-only). Archivos-contrato
+únicos viven en la RAÍZ del ticker — un archivo no gana carpeta.
+
 ```
 workspace/
-├── macro-view.yaml               # house view compartido (ver templates/macro-view.yaml)
+├── macro-view.yaml               # house view compartido — SOLO aquí; instanciarlo
+│                                 # dentro de un ticker es violación de contrato
 └── <TICKER>/
-    ├── profile/
-    │   └── issuer-profile.yaml
-    ├── filings/
+    ├── issuer-profile.yaml       # contrato raíz (framework-mapper)
+    ├── driver-map.md             # contrato raíz (driver-inventory)
+    ├── filings/                  # INPUTS
     │   ├── sec/
     │   │   ├── 10-K/
     │   │   ├── 10-Q/
@@ -17,23 +22,30 @@ workspace/
     │       ├── annual/
     │       ├── quarterly/
     │       └── eventos-relevantes/
-    ├── earnings-transcripts/     # transcripts de earnings calls — si están, SE CONSIDERAN
+    ├── transcripts/              # INPUTS: earnings calls — si están, SE CONSIDERAN
     │                             # (statement-mapper los lee como fuente de guidance)
-    ├── brand/
-    │   └── DESIGN.md             # opcional: colores de marca del analista para el xlsx
-    │                             # (xlsx-building los carga; slots abajo)
-    ├── comps/                    # un comp-snapshot.yaml por comparable
-    ├── model/
+    ├── comps/                    # INPUTS: un comp-snapshot.yaml por comparable
+    ├── brand/                    # CONFIG
+    │   └── DESIGN.md             # opcional: colores de marca del analista (slots abajo)
+    ├── model/                    # OUTPUTS
     │   └── <ticker>-model_YYYY-MM-DD_v#.xlsx
-    ├── assumptions/
-    │   └── driver-map.md
-    ├── notes/
-    │   ├── industry-report.md
-    │   └── thesis-journal.md     # append-only
-    └── log/
+    ├── research/                 # OUTPUTS: análisis
+    │   └── industry-report.md    #   (+ notas y reportes futuros)
+    └── journal/                  # REGISTRO append-only
+        ├── thesis-journal.md     # entradas de cada gate/debate
         ├── decisions.md          # observado / guidance / supuesto / output, con fecha
         └── forecast-accuracy.md  # calibración por driver entre trimestres
 ```
+
+### Migración desde el árbol v1 (coberturas existentes)
+
+Solo movimientos, nada se borra (Standard V(C)):
+`profile/issuer-profile.yaml` → raíz · `assumptions/driver-map.md` → raíz ·
+`notes/industry-report.md` → `research/` · `notes/thesis-journal.md` →
+`journal/` · `log/*` → `journal/` · `earnings-transcripts/` → `transcripts/` ·
+`macro-view.yaml` dentro del ticker → subirlo al workspace (si ya existe uno en
+workspace, preguntar cuál manda — nunca resolver en silencio). Carpetas viejas
+vacías se eliminan al final (carpeta vacía no es dato).
 
 ## Convención de nombres de filings
 

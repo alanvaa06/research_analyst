@@ -5,7 +5,7 @@ description: Análisis de industria y mercado estilo CFA para una cobertura de e
 
 # industry-analysis
 
-Dueña única de `notes/industry-report.md` y del universo de comparables. Es la etapa
+Dueña única de `research/industry-report.md` y del universo de comparables. Es la etapa
 top-down del proceso CFA: la tesis nace aquí, no en valuación. Los drivers de la
 etapa siguiente se DERIVAN de la economía de industria que esta skill establece.
 

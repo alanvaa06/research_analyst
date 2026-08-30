@@ -5,8 +5,8 @@ description: Drivers y revenue build-up del modelo — diseña los drivers clave
 
 # driver-inventory
 
-Dueña única de `assumptions/driver-map.md`, del contenido de assumptions y de
-`log/forecast-accuracy.md`. Corre en DOS pasadas: **design** (antes del modelo —
+Dueña única de `driver-map.md` (raíz del ticker), del contenido de assumptions y de
+`journal/forecast-accuracy.md`. Corre en DOS pasadas: **design** (antes del modelo —
 decide QUÉ schedules existen) y **populate** (después — les pone valores). El
 principio: un forecast de "crecimiento de ingresos %" no es un forecast; precio ×
 volumen sí.
@@ -60,14 +60,14 @@ PIB (macro-view) × industria vs PIB (industry-report §2) × participación (§
    F11) — al poblar, el analista ve su serie realizada al lado de lo que teclea.
 2. Flag de líneas sin driver que sigan forecasteadas "por inercia".
 3. Contraste vs guidance: donde el supuesto del analista difiere del guidance,
-   registrar la diferencia y el porqué en `log/decisions.md` (es información de
+   registrar la diferencia y el porqué en `journal/decisions.md` (es información de
    tesis, no un error). El guidance citable incluye lo extraído de
-   `earnings-transcripts/` por statement-mapper — citar transcript y periodo.
+   `transcripts/` por statement-mapper — citar transcript y periodo.
 
 ## Mantenimiento (`/update-quarter` paso 5) — calibración
 
 1. Actual (recién capturado por statement-mapper) vs driver estimado, por driver.
-2. Append a `log/forecast-accuracy.md`: driver, estimado, actual, error %, fecha.
+2. Append a `journal/forecast-accuracy.md`: driver, estimado, actual, error %, fecha.
    Con historia suficiente, calcula sesgo por driver (¿siempre optimista en
    volumen?).
 3. Ese sesgo documentado alimenta la entrevista adaptativa: el debate cita TU

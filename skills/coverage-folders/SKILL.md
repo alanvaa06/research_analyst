@@ -23,7 +23,7 @@ metadatos, mueve y renombra. Las demás skills solo leen rutas.
    BMV-annual/BMV-quarterly/evento relevante/**transcript de earnings call**),
    periodo, y renombra según la convención
    (`<TICKER>_<tipo>_<periodo>[_fecha].<ext>`). Transcripts van a
-   `earnings-transcripts/`. Ambigüedad ⇒ preguntar.
+   `transcripts/`. Ambigüedad ⇒ preguntar.
 3. Checklist de faltantes contra el mínimo del pipeline: último anual + trimestrales
    del año en curso. Transcripts: opcionales, pero si existen se reportan como
    ENCONTRADOS — el pipeline los considera (guidance). Reporta encontrado /
@@ -32,7 +32,17 @@ metadatos, mueve y renombra. Las demás skills solo leen rutas.
    DESIGN.md o menciona colores de marca, va ahí — xlsx-building lo carga al
    construir el modelo.
 4. Verifica que `workspace/macro-view.yaml` existe (si no: crear desde template,
-   vacío, y avisar).
+   vacío, y avisar). **Regla dura: macro-view vive SOLO a nivel workspace** —
+   jamás instanciarlo dentro del folder del ticker; si aparece uno ahí
+   (cobertura vieja o error), tratarlo con el procedimiento de migración.
+
+## Procedimiento — migración árbol v1 → v2
+
+Para coberturas creadas con el árbol viejo (profile/ assumptions/ notes/ log/
+earnings-transcripts/): aplicar el mapa de `templates/coverage-tree.md`
+(§Migración) — solo movimientos, nada se borra; `macro-view.yaml` dentro del
+ticker se sube al workspace (si ya existe uno ahí, preguntar cuál manda);
+carpetas viejas vacías se eliminan al final; reportar cada movimiento.
 
 ## Procedimiento — archivado (mantenimiento)
 

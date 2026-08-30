@@ -6,7 +6,7 @@ description: Estándar del modelo 3 estados del plugin — construye el xlsx (es
 # model-standards
 
 Dueña única del xlsx. Nadie más escribe en el modelo. Construye contra dos contratos:
-`templates/model-spec.md` (estructura) y `assumptions/driver-map.md` (qué schedules
+`templates/model-spec.md` (estructura) y `driver-map.md` (raíz del ticker — qué schedules
 existen). **Toda cifra sale de fórmula o de un input etiquetado del analista — esta
 skill jamás genera un número.**
 
@@ -22,8 +22,8 @@ skill jamás genera un número.**
 | Input | De quién | Qué trae |
 |---|---|---|
 | Históricos mapeados con cita | `statement-mapper` | cifras `observado` por línea |
-| `assumptions/driver-map.md` | `driver-inventory` (design) | drivers clave + spec de schedules + doble ruta de revenue |
-| `profile/issuer-profile.yaml` | `framework-mapper` | marco, convenciones, métodos de valuación activos |
+| `driver-map.md` (raíz) | `driver-inventory` (design) | drivers clave + spec de schedules + doble ruta de revenue |
+| `issuer-profile.yaml` (raíz) | `framework-mapper` | marco, convenciones, métodos de valuación activos |
 | `macro-view.yaml` (workspace) | analista | rf, ERP, FX, decks — para tab Macro |
 | `comps/*.yaml` | `statement-mapper` | snapshots para Val_Comps |
 

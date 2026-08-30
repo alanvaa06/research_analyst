@@ -11,13 +11,13 @@ el formato y las reglas. Ningún gate se cierra sin su entrada en el journal.
 2. **Entrevista adaptativa.** 2-4 preguntas generadas EN VIVO desde:
    - lo que la skill acaba de encontrar (el diff, el mapeo, los drivers),
    - el historial de `thesis-journal.md` (posturas previas, pendientes),
-   - `log/forecast-accuracy.md` si existe (sesgo histórico documentado del analista).
+   - `journal/forecast-accuracy.md` si existe (sesgo histórico documentado del analista).
    Las preguntas NUNCA salen de un guion fijo. El SKILL.md fija el objetivo; el
    hallazgo dicta la pregunta.
 3. **Debate corto.** El modelo toma la posición adversarial: steelman de la
    contra-tesis, argumentando SOLO con datos observados y normas verificadas.
    Máximo 2-3 rondas. El analista resuelve; el modelo jamás decide.
-4. **Registro.** Entrada append-only en `notes/thesis-journal.md` (formato abajo).
+4. **Registro.** Entrada append-only en `journal/thesis-journal.md` (formato abajo).
 
 ## Reglas duras
 

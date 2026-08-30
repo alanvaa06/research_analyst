@@ -35,7 +35,11 @@ freeze y outline salen del módulo. `/model-check` audita esto con los checks F
 - Fila 3/4: header de periodos con sufijo A/E (`0"A"` / `0"E"` → 2025A, 2026E).
 - Freeze panes en A4/C4: título + años + check congelados al scrollear.
 - Gridlines ocultas en TODAS las hojas (CFI: 100% del corpus).
-- Columna A de etiquetas ancha (~42); etiquetas descriptivas, sin crípticos.
+- **Columna A = navegación** (patrón CFI del caso AMZN): angosta (~2.5), con
+  SOLO una "x" en cada fila de header/sub-header — Ctrl+flecha sobre la
+  columna A salta de sección en sección. Las etiquetas viven en columna B
+  (~42), descriptivas, sin crípticos. El builder lo aplica solo
+  (`_nav_mark` en section_header/subsection/check_row).
 - Secciones dentro de la hoja: header con banda naranja bold 14; sub-secciones
   bold 12; contenido agrupado (outline nivel 1) para colapsar a vista resumen.
 

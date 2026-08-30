@@ -48,10 +48,14 @@ model-standards) y **no mueve archivos** (eso es coverage-folders).
 
 ## Procedimiento — comp snapshot (modo ligero)
 
-1. Universo viene de `research/industry-report.md` (industry-analysis lo decide, no tú).
-2. Por comparable: llena `templates/comp-snapshot.yaml` — balance e income items del
-   último filing del comp con cita; market data (precio, acciones) de fuente pública
-   con fuente y **timestamp** (`as_of` con hora: los precios envejecen).
+1. Universo viene del industry-report vigente en `research/industry/`
+   (industry-analysis lo decide, no tú).
+2. Por comparable: llena `templates/comp-snapshot.yaml` y guárdalo como
+   `comps/<COMP>_YYYY-MM-DD.yaml` — snapshot NUEVO fechado, jamás sobreescribir
+   el anterior (vigente = fecha más reciente; la historia reconstruye el
+   football field de cualquier fecha). Balance e income items del último filing
+   del comp con cita; market data (precio, acciones) de fuente pública con
+   fuente y **timestamp** (`as_of` con hora: los precios envejecen).
 3. Anota el marco contable del comp y las notas de comparabilidad (consulta la
    reference de framework-mapper si el marco difiere del de la emisora — pero la
    cita normativa la emite framework-mapper, no tú).

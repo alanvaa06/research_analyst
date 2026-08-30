@@ -47,6 +47,9 @@ valuation_methods:
   sotp: false                 # conglomerado
   residual_income: false      # bancos — ESPECIFICADO, INACTIVO hasta v2
 
+# --- Staleness del análisis de industria (check D10) -------------------------
+industry_staleness_months: 6  # aviso si el industry-report vigente es más viejo
+
 # --- Materialidad (umbrales para impact-triage) ------------------------------
 materiality:
   critical_pct_target_price: 10   # hallazgo mueve precio objetivo >= X% -> crítico

@@ -20,6 +20,7 @@ recomendaciones de inversión.
 |---|---|
 | Iniciar cobertura de una emisora ("inicia cobertura", "nueva emisora") | `commands/init-coverage.md` |
 | Actualizar por trimestre nuevo / evento relevante | `commands/update-quarter.md` |
+| Refrescar el análisis de industria ("la industria se movió", "actualiza el landscape con diff") | `commands/update-industry.md` |
 | Auditar un modelo / correr checks | `commands/model-check.md` |
 | Crear carpetas, archivar un filing | `skills/coverage-folders/SKILL.md` |
 | Saber qué norma gobierna una línea, marco de la emisora, perfil contable | `skills/framework-mapper/SKILL.md` |

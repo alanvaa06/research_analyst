@@ -48,6 +48,7 @@ implementación única, cero interpretación del agente.
 | D7 | **Monitor NIF B-10**: si emisora NIF y acumulado trienal en macro-view ≥ 22%, exigir escenario de reconexión pre-modelado | ver framework-mapper reference |
 | D8 | Etiquetas de trazabilidad presentes: inputs con comentario de fuente (observado) o marca guidance/supuesto | muestreo por tab |
 | D9 | **Calidad de utilidades**: CFO/NI < 1 en ≥ 2 periodos consecutivos, o accruals ratio fuera de la banda histórica de la emisora | aviso, no bloqueo; material de entrevista |
+| D10 | **Staleness de industry-report**: fecha del reporte más reciente en `research/industry/` dentro de `industry_staleness_months` (issuer-profile, default 6) | aviso, no bloqueo — recomendar `/update-industry` |
 | D4b | **g implícita de mercado** (reverse DCF en Val_DCF) vs g terminal del analista | divergencia grande = pregunta obligada en entrevista de cierre; nunca bloquea |
 
 ## De formato (checks F — `tools/xlsx_builder.py audit`)

@@ -20,8 +20,8 @@ Umbrales por emisora en `issuer-profile.yaml → materiality`:
 
 | Nivel | Definición operativa | Acción que dispara |
 |---|---|---|
-| **Crítico** | Mueve el precio objetivo ≥ `critical_pct` O toca un pilar de la tesis (thesis-journal) O rompe un driver del driver-map | Actualización de modelo + debate obligatorio + probable nota |
-| **Relevante** | Entre `relevant_pct` y `critical_pct`, o cambia un supuesto secundario | Actualizar supuesto afectado; mención en próxima nota |
+| **Crítico** | Mueve el precio objetivo ≥ `critical_pct` O toca un pilar de la tesis (thesis-journal) O rompe un driver del driver-map | Actualización de modelo + debate obligatorio + probable nota. Si el hallazgo es de naturaleza INDUSTRIAL (competidor, regulación, participación, sustituto): recomendar `/update-industry` |
+| **Relevante** | Entre `relevant_pct` y `critical_pct`, o cambia un supuesto secundario | Actualizar supuesto afectado; mención en próxima nota. Industrial ⇒ recomendar `/update-industry` (el analista decide) |
 | **Cosmético** | Debajo de `relevant_pct` y sin contacto con tesis ni drivers | Registro en log; nada más |
 
 El analista puede reclasificar cualquier hallazgo — la reclasificación se registra

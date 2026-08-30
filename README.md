@@ -34,13 +34,14 @@ enruta cada tarea a la skill correcta. Codex también lee el marketplace:
 
 ## El flujo completo
 
-Tres comandos orquestan todo. Antes de correr verifican que nada falte (incluida
-la confirmación de que no hay información privilegiada); si algo falla, se
-detienen — nunca dejan trabajo a medias.
+Cuatro comandos orquestan todo. Antes de correr verifican que nada falte
+(incluida la confirmación de que no hay información privilegiada); si algo
+falla, se detienen — nunca dejan trabajo a medias.
 
 ```
 /init-coverage AAPL ./mis-filings/     # abrir una cobertura nueva
 /update-quarter AAPL ./nuevo-10q.pdf   # actualizarla cada trimestre
+/update-industry AAPL                  # refrescar la vista de industria, con diff
 /model-check                           # auditar el Excel en cualquier momento
 ```
 
@@ -75,6 +76,37 @@ todo queda escrito en un diario de tesis:
 captura, **clasifica el impacto antes de tocar el modelo** (`impact-triage`:
 crítico / relevante / cosmético), re-corre los checks y mide qué tan bien
 estimaste cada driver (calibración).
+
+`/update-industry` refresca la vista de industria cuando el sector se mueve (o
+cuando el reporte lleva más de 6 meses sin tocarse — el plugin te avisa): escribe
+un reporte NUEVO fechado, muestra el **diff contra la versión anterior**, y el
+triage clasifica qué deltas tocan tus supuestos.
+
+## Cómo se ve una cobertura en disco
+
+Cada empresa vive en su carpeta, organizada en cuatro categorías. Regla general:
+lo que cambia con el tiempo se guarda **fechado** — el vigente es el más
+reciente y nada se borra jamás (retención de 7 años).
+
+```
+workspace/
+├── macro-view.yaml            # supuestos macro de la casa — uno para TODAS las coberturas
+└── AAPL/
+    ├── issuer-profile.yaml    # ficha de la empresa: marco contable, periodicidad,
+    │                          #   métodos de valuación — tú confirmas cada campo
+    ├── driver-map.md          # QUÉ mueve los ingresos y costos — el contrato del modelo
+    ├── filings/               # ENTRADAS · reportes oficiales (SEC y BMV), organizados
+    ├── transcripts/           # ENTRADAS · earnings calls — si están, se usan como guidance
+    ├── comps/                 # ENTRADAS · fotos fechadas de cada comparable
+    ├── brand/                 # CONFIG · tus colores de marca para el Excel (opcional)
+    ├── model/                 # SALIDAS · el Excel versionado por fecha
+    │   └── inputs/            #   cifras capturadas de los filings, con su cita
+    ├── research/              # SALIDAS · análisis fechados
+    │   ├── industry/          #   reportes de industria (historia completa, con diffs)
+    │   └── notes/             #   notas de inversión publicadas
+    └── journal/               # REGISTRO · solo se agrega, nunca se borra:
+                               #   diario de tesis · decisiones · aciertos de forecast
+```
 
 ## Las 8 skills — y cuándo usarlas sueltas
 

@@ -24,7 +24,10 @@ workspace/
     │       └── eventos-relevantes/
     ├── transcripts/              # INPUTS: earnings calls — si están, SE CONSIDERAN
     │                             # (statement-mapper los lee como fuente de guidance)
-    ├── comps/                    # INPUTS: un comp-snapshot.yaml por comparable
+    ├── comps/                    # INPUTS: snapshots fechados por comparable
+    │   └── <COMP>_YYYY-MM-DD.yaml          # vigente = fecha más reciente; la
+    │                             #   historia reconstruye el football field de
+    │                             #   cualquier fecha (calibración)
     ├── brand/                    # CONFIG
     │   └── DESIGN.md             # opcional: colores de marca del analista (slots abajo)
     ├── model/                    # OUTPUTS
@@ -35,13 +38,25 @@ workspace/
     │       ├── canonical_quarterly.csv   # CONTRATO: series trimestrales observadas
     │       ├── consolidated_long.csv     # CONTRATO: formato tidy largo (todas)
     │       └── extract_*.json            # papeles de trabajo por filing, con citas
-    ├── research/                 # OUTPUTS: análisis
-    │   └── industry-report.md    #   (+ notas y reportes futuros)
+    ├── research/                 # OUTPUTS: análisis (versionado por fecha)
+    │   ├── industry/
+    │   │   └── industry-report_YYYY-MM-DD.md   # vigente = fecha más reciente
+    │   └── notes/
+    │       └── <ticker>-note_YYYY-MM-DD.md     # notas de inversión (etapa 7)
     └── journal/                  # REGISTRO append-only
         ├── thesis-journal.md     # entradas de cada gate/debate
         ├── decisions.md          # observado / guidance / supuesto / output, con fecha
         └── forecast-accuracy.md  # calibración por driver entre trimestres
 ```
+
+### Convención de versionado por fecha
+
+Artefactos de ESTADO se fechan: `<nombre>_YYYY-MM-DD.<ext>`, **vigente = fecha
+más reciente**, nada se borra. Aplica a: `model/` (con `_v#` intra-día),
+`research/industry/`, `research/notes/`, `comps/`. NO aplica a `journal/*`
+(append-only: ya son historia) ni a los contratos de raíz (`driver-map.md`,
+`issuer-profile.yaml`): son documentos vivos con gate cuya historia queda en
+`journal/decisions.md` y thesis-journal — versionarlos duplicaría el journal.
 
 ### model/inputs/ — la capa de captura
 

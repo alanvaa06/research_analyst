@@ -13,7 +13,7 @@ volumen sí.
 
 ## Pasada 1 — DESIGN (`/init-coverage` paso 5)
 
-Inputs: `industry-report.md` (economía de la industria) + históricos mapeados
+Inputs: industry-report vigente en `research/industry/` (economía de la industria) + históricos mapeados
 (unit economics visibles, KPIs revelados, segmentos) + `macro-view.yaml`.
 
 1. Deriva candidatos a driver DESDE la industria: price-taker de commodity ⇒ deck de

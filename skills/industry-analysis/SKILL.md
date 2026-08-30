@@ -5,15 +5,19 @@ description: Análisis de industria y mercado estilo CFA para una cobertura de e
 
 # industry-analysis
 
-Dueña única de `research/industry-report.md` y del universo de comparables. Es la etapa
+Dueña única de `research/industry/` (reportes fechados: `industry-report_YYYY-MM-DD.md`,
+vigente = fecha más reciente, nada se borra) y del universo de comparables. Es la etapa
 top-down del proceso CFA: la tesis nace aquí, no en valuación. Los drivers de la
 etapa siguiente se DERIVAN de la economía de industria que esta skill establece.
 
 ## Cuándo corre
 
-- `/init-coverage` paso 4 (en paralelo con la captura de históricos).
-- Standalone: refrescar el reporte cuando la industria se mueve (evento relevante
-  sectorial, entrada de competidor, cambio regulatorio).
+- `/init-coverage` paso 4 (en paralelo con la captura de históricos) — primer reporte.
+- `/update-industry`: refresh cuando la industria se mueve (evento sectorial,
+  competidor nuevo, cambio regulatorio, aviso de staleness D10). El refresh
+  escribe un reporte NUEVO fechado y produce el **diff sección por sección
+  contra la versión anterior** — ese diff es el insumo del triage.
+- Standalone: preguntas puntuales de industria sin refresh formal.
 
 ## Fuentes (sin APIs de pago — v1)
 

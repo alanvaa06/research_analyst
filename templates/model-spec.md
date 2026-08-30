@@ -16,8 +16,9 @@ en `references/valuation-conventions.md`.
 | 5 | `IS` | Estado de resultados histórico + forecast | Una fórmula por fila, copiada idéntica |
 | 6 | `BS` | Balance | Balance check en el header de la hoja |
 | 7 | `CF` | Flujo de efectivo | Tie-out: caja final CF = caja BS |
-| 8+ | `Sch_<driver>` | Un schedule por driver del driver-map (ej. `Sch_Stores`, `Sch_Copper`) | El driver-map es el contrato: cada schedule que pide, existe |
-| — | `Rev_Reconcile` | Doble ruta de revenue: bottom-up (schedules) vs top-down (Macro × industria × participación) | Divergencia > umbral → flag en error check |
+| 8 | `Ratios` | DuPont 3/5, ROIC + economic profit, ratios estándar, CCC, DOL/DFL/DTL, crédito/screening, calidad de utilidades | Solo fórmulas sobre IS/BS/CF; ver ratios-analytics.md |
+| 9 | `Schedules` | **UNA sola tab**: un bloque por schedule, apilados top-to-bottom. Bloques core siempre presentes: `Sch: PPE`, `Sch: Debt`, `Sch: WC`. Un bloque más por driver del driver-map (ej. `Sch: Stores`, `Sch: Copper`) | Header de bloque en col. A con prefijo `Sch: `; el driver-map es el contrato: cada bloque que pide, existe. Nunca una tab por schedule |
+| — | `Rev_Reconcile` | Doble ruta de revenue: bottom-up (bloques de Schedules) vs top-down (Macro × industria × participación) | Divergencia > umbral → flag en error check |
 | — | `Val_DCF` | FCFF multi-stage; terminal DUAL: Gordon Y exit multiple, cruzados | Gordon implica múltiplo; exit implica g; ambos visibles |
 | — | `Val_Comps` | Múltiplos calculados POR FÓRMULA desde comps/*.yaml; media armónica | Staleness de snapshots flaggeada |
 | — | `Val_<método>` | Solo métodos activos en issuer-profile (DDM / FCFE / NAV_AFFO / SOTP) | RI: especificado, inactivo v1 |
@@ -27,6 +28,10 @@ en `references/valuation-conventions.md`.
 ## Reglas transversales
 
 - Periodos en columnas, líneas en filas; flujo top-to-bottom, left-to-right.
+- **Menos tabs, mejor**: schedules SIEMPRE como bloques dentro de `Schedules`, jamás
+  tabs sueltas. El conteo de tabs del modelo es fijo; solo crecen los bloques.
+- Bloques de `Schedules`: header `Sch: <nombre>` en col. A, filas del bloque
+  agrupadas (outline) para colapsar; una fila en blanco entre bloques.
 - Un archivo por modelo; **cero links entre libros**.
 - Ninguna cifra nace de generación libre: fórmula o input etiquetado.
 - Cada línea de forecast referencia un driver de `Assumptions` — línea sin driver =

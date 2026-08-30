@@ -29,6 +29,19 @@ El football field agrega SOLO métodos activos en `issuer-profile.yaml`.
   Divergencia grande = check D4: revisar supuesto con el analista, no promediar.
 - Etapas: single-stage es el caso degenerado; default 2-3 etapas según
   `life_cycle_stage` (growth ⇒ horizonte largo).
+- **Bloque beta pure-play (Hamada)** — mecánica visible, no "beta con fuente" a secas:
+  - β_u por comp = β_l / (1 + (1−t)·D/E) — una fila por comp; β_l input `observado`
+    con fuente en comentario; D y E del `comps/*.yaml`.
+  - β_u grupo = mediana; β_relevered = β_u grupo × (1 + (1−t)·D/E objetivo).
+  - D/E objetivo: `supuesto` del analista en Assumptions. El analista puede
+    sobreescribir el beta final (documentado en log/decisions.md); la mecánica
+    queda visible como referencia.
+- **Bloque reverse DCF (expectativas implícitas)** — forma cerrada, sin Goal Seek:
+  - EV de mercado = mkt cap actual + deuda neta + minoritarios + preferentes.
+  - TV implícita = (EV − PV de FCFF explícitos) × (1+WACC)^n.
+  - g implícita = WACC − FCFF_{n+1} / TV implícita.
+  - Tercera columna junto al cruce de terminales: "el mercado descuenta g = X; tú
+    supones g = Y" (check D4b — debate, nunca bloqueo).
 
 ### Val_Comps
 - Múltiplos calculados POR FÓRMULA desde `comps/*.yaml`: EV = mkt cap + deuda − caja
@@ -39,6 +52,14 @@ El football field agrega SOLO métodos activos en `issuer-profile.yaml`.
 - Comparabilidad entre marcos: EBITDA IFRS 16 vs ASC 842 NO comparable directo —
   fila de ajuste de arrendamientos cuando el universo mezcla marcos (ver
   framework-mapper reference).
+- **Bloque de múltiplos justificados + PVGO** (debajo del grupo de comps) — cero
+  inputs nuevos, todo por referencia a b, g, r, ROE ya existentes en
+  Assumptions/Val_DCF/Ratios:
+  - P/E justificado leading = (1−b)/(r−g); trailing = (1−b)(1+g)/(r−g).
+  - P/B justificado = (ROE−g)/(r−g); P/S justificado = (E₀/S₀)(1−b)(1+g)/(r−g).
+  - PVGO = P₀ − E₁/r, y PVGO/P₀ (% del precio que es expectativa de crecimiento).
+  - Lectura por fila: múltiplo de mercado vs justificado — de descriptivo ("a
+    cuánto cotizan") a normativo ("a cuánto deberían").
 
 ### Val_DDM (condicional)
 - Gordon: V₀ = D₁/(r−g). Two-stage y H-model con etapas explícitas.

@@ -21,12 +21,16 @@ Inputs: `industry-report.md` (economía de la industria) + históricos mapeados
    servicios ⇒ clientes × ARPU; etc. Los históricos validan (¿qué KPIs revela la
    emisora? ¿qué explica la varianza histórica de revenue?).
 2. Construye el **revenue build-up en doble ruta**:
-   - bottom-up: Σ segmentos (driver físico × precio) — esto define los `Sch_<driver>`;
+   - bottom-up: Σ segmentos (driver físico × precio) — esto define los bloques
+     `Sch: <driver>` de la tab `Schedules` (UNA sola tab, un bloque por schedule;
+     nunca una tab por driver);
    - top-down: PIB (macro-view) × crecimiento de industria vs PIB (industry-report)
      × participación de la emisora.
    Ambas van al modelo y se reconcilian por fórmula (`Rev_Reconcile`, check D2).
 3. Drivers de costo y capex también: el cobre es revenue para la minera y costo para
-   el cablero. Cada línea material del modelo → su driver.
+   el cablero. Cada línea material del modelo → su driver. **Working capital por
+   días (DIO/DSO/DPO) es obligatorio** en esta sección — alimenta el bloque core
+   `Sch: WC` — o se justifica explícitamente en "Líneas sin driver".
 4. Cada driver ancla EXPLÍCITAMENTE a: supuesto de industria (sección 7 del reporte),
    deck de macro-view, guidance (etiquetado), o supuesto propio de la emisora.
 5. Escribe `driver-map.md` (formato abajo). Gate: el usuario aprueba el mapa — este
@@ -37,11 +41,11 @@ Inputs: `industry-report.md` (economía de la industria) + históricos mapeados
 ```markdown
 # Driver Map — <TICKER>   [fecha]
 ## Revenue build-up (bottom-up)
-| Segmento | Driver físico | Driver de precio | Schedule | Ancla |
+| Segmento | Driver físico | Driver de precio | Bloque (`Sch: <nombre>`) | Ancla |
 ## Ruta top-down
 PIB (macro-view) × industria vs PIB (industry-report §2) × participación (§3) — umbral de reconciliación: X%
 ## Drivers de costo y capex
-| Línea | Driver | Schedule | Ancla |
+| Línea | Driver | Bloque (`Sch: <nombre>`) | Ancla |
 ## Líneas sin driver (deuda técnica del forecast)
 | Línea | Por qué no tiene | Plan |
 ```

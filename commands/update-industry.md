@@ -15,7 +15,7 @@ Uso: `/update-industry <TICKER> [contexto del porqué]`.
 
 | Paso | Skill | Qué hace |
 |---|---|---|
-| 1 | `industry-analysis` | Refresh completo → escribe `research/industry/industry-report_<YYYY-MM-DD>.md` NUEVO; el anterior queda intacto (vigente = fecha más reciente; nada se borra) |
+| 1 | `industry-analysis` | Refresh completo — lee filings, datos públicos Y `research/industry/sources/` (research del analista/terceros: si está, se considera; regla de citado en coverage-tree) → escribe `research/industry/industry-report_<YYYY-MM-DD>.md` NUEVO; el anterior queda intacto (vigente = fecha más reciente; nada se borra) |
 | 2 | `industry-analysis` | **Diff contra la versión anterior**, sección por sección (§1–§7): tabla de cambios, cada uno con fuente |
 | 3 | `impact-triage` | Clasifica cada delta (crítico/relevante/cosmético) — en especial los de §7 (supuestos de industria que alimentan el modelo) y §6 (cambios al comp universe) |
 | 4 | `driver-inventory` | Para los deltas de §7 aprobados por el analista: contraste contra Assumptions vigentes; el analista decide qué supuesto cambia; registro en `journal/decisions.md` |

@@ -42,6 +42,7 @@ falla, se detienen — nunca dejan trabajo a medias.
 /init-coverage AAPL ./mis-filings/     # abrir una cobertura nueva
 /update-quarter AAPL ./nuevo-10q.pdf   # actualizarla cada trimestre
 /update-industry AAPL                  # refrescar la vista de industria, con diff
+/update-macro                          # actualizar el view macro desde tus fuentes
 /model-check                           # auditar el Excel en cualquier momento
 ```
 
@@ -90,7 +91,10 @@ reciente y nada se borra jamás (retención de 7 años).
 
 ```
 workspace/
-├── macro-view.yaml            # supuestos macro de la casa — uno para TODAS las coberturas
+├── macro/                     # TODO lo macro, compartido por todas las coberturas:
+│   ├── macro-view.yaml        #   los supuestos vigentes (tasa, FX, PIB, inflación)
+│   ├── sources/               #   tu research macro y el de terceros (pdf, html, md)
+│   └── history/               #   cada versión anterior del view, fechada
 └── AAPL/
     ├── issuer-profile.yaml    # ficha de la empresa: marco contable, periodicidad,
     │                          #   métodos de valuación — tú confirmas cada campo
@@ -103,6 +107,7 @@ workspace/
     │   └── inputs/            #   cifras capturadas de los filings, con su cita
     ├── research/              # SALIDAS · análisis fechados
     │   ├── industry/          #   reportes de industria (historia completa, con diffs)
+    │   │   └── sources/       #     tu research del sector y el de terceros
     │   └── notes/             #   notas de inversión publicadas
     └── journal/               # REGISTRO · solo se agrega, nunca se borra:
                                #   diario de tesis · decisiones · aciertos de forecast
@@ -136,8 +141,14 @@ responde a lenguaje natural, sobre coberturas del plugin o trabajo tuyo previo.
 
 - **`brand/DESIGN.md`** — pon tus colores de marca y el Excel se genera con
   ellos (los colores de trazabilidad no se tocan).
-- **`macro-view.yaml`** — los supuestos macro de la casa (tasa, FX, PIB) viven
-  una sola vez a nivel workspace y alimentan todas las coberturas.
+- **`macro/`** — los supuestos macro de la casa (tasa, FX, PIB) viven una sola
+  vez a nivel workspace y alimentan todas las coberturas. Deja tu research en
+  `macro/sources/` y `/update-macro` te propone la actualización campo por
+  campo, con cita — tú confirmas cada valor.
+- **`sources/`** (macro y por industria) — deja ahí research tuyo o de terceros
+  en cualquier formato; el pipeline lo considera y lo cita. ¿Quieres leer un
+  `.yaml` sin pelearte con el formato? Pídele al asistente: "explícame mi
+  macro-view".
 - **`transcripts/`** — sube los transcripts de earnings calls y el pipeline los
   considera automáticamente.
 

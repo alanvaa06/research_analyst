@@ -31,17 +31,19 @@ metadatos, mueve y renombra. Las demás skills solo leen rutas.
 3b. `brand/` se crea siempre (vacía está bien). Si el usuario entregó un
    DESIGN.md o menciona colores de marca, va ahí — xlsx-building lo carga al
    construir el modelo.
-4. Verifica que `workspace/macro-view.yaml` existe (si no: crear desde template,
-   vacío, y avisar). **Regla dura: macro-view vive SOLO a nivel workspace** —
-   jamás instanciarlo dentro del folder del ticker; si aparece uno ahí
+4. Verifica que `workspace/macro/macro-view.yaml` existe (si no: crear la
+   estructura `macro/{macro-view.yaml, sources/, history/}` desde template,
+   vacía, y avisar). **Regla dura: lo macro vive SOLO en `workspace/macro/`** —
+   jamás dentro del folder del ticker; si aparece un macro-view suelto ahí
    (cobertura vieja o error), tratarlo con el procedimiento de migración.
 
 ## Procedimiento — migración árbol v1 → v2
 
 Para coberturas creadas con el árbol viejo (profile/ assumptions/ notes/ log/
 earnings-transcripts/): aplicar el mapa de `templates/coverage-tree.md`
-(§Migración) — solo movimientos, nada se borra; `macro-view.yaml` dentro del
-ticker se sube al workspace (si ya existe uno ahí, preguntar cuál manda);
+(§Migración) — solo movimientos, nada se borra; `macro-view.yaml` suelto (raíz
+del workspace o dentro de un ticker) va a `workspace/macro/` (si ya existe uno
+ahí, preguntar cuál manda);
 carpetas viejas vacías se eliminan al final; reportar cada movimiento.
 
 ## Procedimiento — archivado (mantenimiento)

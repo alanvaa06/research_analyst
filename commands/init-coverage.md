@@ -32,7 +32,7 @@ Gates de usuario en cada transición + protocolo de debate
    solo el marco general).
 6. **Guard MNPI (Standard II(A)):** usuario confirma que TODO el contenido de los
    folders es información pública. Sin confirmación, no se procesa contenido.
-7. `macro-view.yaml`: existe y `updated_at` dentro de `staleness_warn_months` —
+7. `workspace/macro/macro-view.yaml`: existe y `updated_at` dentro de `staleness_warn_months` —
    stale o vacío AVISA (no bloquea): las etapas que lo consumen quedan marcadas.
 
 ## Pipeline (cada paso cierra con su gate + debate + entrada en thesis-journal)

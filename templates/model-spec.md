@@ -22,6 +22,7 @@ en `references/valuation-conventions.md`.
 | — | `Val_DCF` | FCFF multi-stage; terminal DUAL: Gordon Y exit multiple, cruzados | Gordon implica múltiplo; exit implica g; ambos visibles |
 | — | `Val_Comps` | Múltiplos calculados POR FÓRMULA desde comps/*.yaml; media armónica | Staleness de snapshots flaggeada |
 | — | `Val_<método>` | Solo métodos activos en issuer-profile (DDM / FCFE / NAV_AFFO / SOTP) | RI: especificado, inactivo v1 |
+| — | `Quarterly` | Condicional (`model_periodicity: annual_plus_quarterly`): captura trimestral observada, LTM, actual-vs-estimado del trimestre | Alimenta la calibración de /update-quarter; sin forecast trimestral (eso es modo `quarterly`); cross-foot 4 trimestres = anual (check C8); trimestres JAMÁS mezclados en tabs anuales |
 | — | `Sensitivity` | Data tables 2 variables, aisladas | Tab dedicada — no ensucia el modelo |
 | — | `Summary` | Football field (solo métodos activos) + 3-5 outputs clave | Ejecutivo: una pantalla |
 

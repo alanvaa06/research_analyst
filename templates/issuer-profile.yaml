@@ -28,6 +28,15 @@ segments: []                  # segmentos reportados, tal como los presenta la e
 life_cycle_stage: ""          # embryonic | growth | mature | decline
                               # (determina horizonte de forecast y peso de métodos)
 
+# --- Periodicidad del modelo (PREGUNTA OBLIGATORIA en init-coverage; jamás asumir)
+# annual                 -> modelo anual puro
+# annual_plus_quarterly  -> modelo anual + tab Quarterly (captura trimestral
+#                           observada, LTM, calibración de /update-quarter) —
+#                           propuesta default cuando hay trimestrales archivados
+# quarterly              -> forecast trimestral completo (emisoras muy estacionales)
+model_periodicity: ""         # annual | annual_plus_quarterly | quarterly
+periodicity_confirmed_by_user: false
+
 # --- Valuación: activación de métodos (deriva de issuer_type + life_cycle) --
 valuation_methods:
   dcf_fcff: true              # core — siempre; terminal dual (gordon + exit multiple)

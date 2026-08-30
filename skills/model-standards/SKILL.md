@@ -32,7 +32,9 @@ Falta un contrato → detente y repórtalo; no construyas parcial ni inventes el
 ## Procedimiento de construcción
 
 1. Lee los cinco contratos. Confirma con el usuario: periodos históricos, horizonte,
-   métodos activos (del perfil — puede sobreescribir).
+   periodicidad (`model_periodicity` del perfil — si el campo está vacío o sin
+   confirmar, DETENTE y pregunta; anual nunca se asume) y métodos activos (del
+   perfil — puede sobreescribir).
 2. Genera el xlsx VÍA `tools/xlsx_builder.py` (skill `xlsx-building` —
    obligatoria, nunca openpyxl crudo para estructura/formato) siguiendo
    `model-spec.md`: tabs en orden, formato 100% por código

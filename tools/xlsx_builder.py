@@ -109,6 +109,32 @@ class PeriodHeader:
     last_actual_year: int
 
 
+# Rebrandable DECORATIVE slots (brand/DESIGN.md). Semantic colors — input blue,
+# link green, warn red, input/scenario fills — are the traceability contract
+# and are NEVER brandable.
+BRAND_SLOTS = ("brand_primary", "brand_section", "brand_accent")
+
+
+def load_brand(path: str) -> dict[str, str]:
+    """Parse brand/DESIGN.md lines like ``brand_primary: #132E57`` -> ARGB.
+
+    Deterministic: only the three BRAND_SLOTS are read; anything else in the
+    file is prose for humans. Missing file or missing slot -> CFI default.
+    """
+    import re
+    try:
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
+    except OSError:
+        return {}
+    out: dict[str, str] = {}
+    for slot in BRAND_SLOTS:
+        match = re.search(rf"{slot}\s*[:=]\s*#?([0-9A-Fa-f]{{6}})", text)
+        if match:
+            out[slot] = "FF" + match.group(1).upper()
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Builder
 # ---------------------------------------------------------------------------
@@ -117,9 +143,14 @@ class PeriodHeader:
 class ModelStyler:
     """Owns a Workbook and applies the format contract. One instance per model."""
 
-    def __init__(self, units_label: str = "USD millones salvo indicado") -> None:
+    def __init__(self, units_label: str = "USD millones salvo indicado",
+                 brand: Optional[dict[str, str]] = None) -> None:
         self.wb: Workbook = Workbook()
         self.units_label = units_label
+        b = brand or {}
+        self.color_primary: str = b.get("brand_primary", Color.NAVY.value)
+        self.color_section: str = b.get("brand_section", Color.ORANGE.value)
+        self.color_accent: str = b.get("brand_accent", Color.TEAL.value)
         default = self.wb.active
         if default is not None:
             self.wb.remove(default)
@@ -144,21 +175,22 @@ class ModelStyler:
     # -- sheet level --------------------------------------------------------
 
     def new_sheet(self, name: str, freeze: Optional[str] = "C4",
-                  tab_color: Optional[Color] = None) -> Worksheet:
+                  tab_color: Optional[str] = None) -> Worksheet:
+        """tab_color: ARGB string; use self.color_accent for branded tabs."""
         ws = self.wb.create_sheet(name)
         ws.sheet_view.showGridLines = False
         if freeze:
             ws.freeze_panes = freeze
         if tab_color is not None:
-            ws.sheet_properties.tabColor = tab_color.value
+            ws.sheet_properties.tabColor = tab_color
         return ws
 
     def brand_bar(self, ws: Worksheet, title: str, last_col: int = 18) -> None:
-        """Rows 1-2: navy bar + sheet title + units note. Row 3 reserved for checks."""
+        """Rows 1-2: brand bar + sheet title + units note. Row 3 reserved for checks."""
         for col in range(1, last_col + 1):
             for row in (1, 2):
                 cell = ws.cell(row=row, column=col)
-                cell.fill = PatternFill("solid", fgColor=Color.NAVY.value)
+                cell.fill = PatternFill("solid", fgColor=self.color_primary)
         c = ws.cell(row=1, column=1, value="(c) research_analyst - todos los supuestos son del analista")
         c.font = Font(name=FONT_NAME, size=8, color=Color.WHITE.value)
         t = ws.cell(row=2, column=1, value=title)
@@ -194,10 +226,10 @@ class ModelStyler:
 
     def section_header(self, ws: Worksheet, row: int, title: str,
                        last_col: int = 18) -> None:
-        """Orange band, bold 14 — one per model section."""
+        """Section band (default orange), bold 14 — one per model section."""
         for col in range(1, last_col + 1):
             ws.cell(row=row, column=col).fill = PatternFill(
-                "solid", fgColor=Color.ORANGE.value)
+                "solid", fgColor=self.color_section)
         c = ws.cell(row=row, column=1, value=title)
         c.font = Font(name=FONT_NAME, size=14, bold=True)
 
@@ -352,8 +384,13 @@ def _series_continuity_violations(ws: Worksheet) -> list[str]:
     return violations
 
 
-def audit_format(path: str) -> list[Finding]:
-    """Run checks F1-F10 on a workbook. Pure read; returns findings."""
+def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Finding]:
+    """Run checks F1-F11 on a workbook. Pure read; returns findings.
+
+    ``brand``: output of load_brand(brand/DESIGN.md) — its values extend the
+    fill whitelist (F4) so a branded model audits green with its own DESIGN.md.
+    """
+    allowed_fills = _ALLOWED_FILLS | set((brand or {}).values())
     wb = load_workbook(path, data_only=False)
     findings: list[Finding] = []
     visible = [wb[n] for n in wb.sheetnames if wb[n].sheet_state == "visible"]
@@ -381,8 +418,8 @@ def audit_format(path: str) -> list[Finding]:
     alien_colors = sorted(all_colors - _ALLOWED_FONT_COLORS)
     findings.append(Finding("F3 colores de fuente", not alien_colors,
                             ", ".join(alien_colors) or "whitelist ok"))
-    # F4 fills within palette
-    alien_fills = sorted(all_fills - _ALLOWED_FILLS)
+    # F4 fills within palette (+ brand slots if DESIGN.md provided)
+    alien_fills = sorted(all_fills - allowed_fills)
     findings.append(Finding("F4 paleta de fills", not alien_fills,
                             ", ".join(alien_fills) or "whitelist ok"))
     # F5 number formats within whitelist
@@ -466,12 +503,13 @@ def _demo(path: str) -> None:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) == 3 and argv[1] == "audit":
-        return _print_report(audit_format(argv[2]))
+    if argv[1:2] == ["audit"] and len(argv) in (3, 4):
+        brand = load_brand(argv[3]) if len(argv) == 4 else None
+        return _print_report(audit_format(argv[2], brand=brand))
     if len(argv) == 3 and argv[1] == "demo":
         _demo(argv[2])
         return _print_report(audit_format(argv[2]))
-    print("uso: python xlsx_builder.py audit|demo <path.xlsx>")
+    print("uso: python xlsx_builder.py audit <path.xlsx> [brand/DESIGN.md] | demo <path.xlsx>")
     return 2
 
 

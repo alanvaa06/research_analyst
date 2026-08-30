@@ -20,10 +20,17 @@ metadatos, mueve y renombra. Las demás skills solo leen rutas.
 1. Instancia el árbol de `templates/coverage-tree.md` bajo `workspace/<TICKER>/`.
    Colisión con cobertura existente ⇒ preguntar; NUNCA sobrescribir.
 2. Clasifica los archivos sueltos que el usuario entregó: tipo (10-K/10-Q/8-K/
-   BMV-annual/BMV-quarterly/evento relevante), periodo, y renombra según la
-   convención (`<TICKER>_<tipo>_<periodo>[_fecha].<ext>`). Ambigüedad ⇒ preguntar.
+   BMV-annual/BMV-quarterly/evento relevante/**transcript de earnings call**),
+   periodo, y renombra según la convención
+   (`<TICKER>_<tipo>_<periodo>[_fecha].<ext>`). Transcripts van a
+   `earnings-transcripts/`. Ambigüedad ⇒ preguntar.
 3. Checklist de faltantes contra el mínimo del pipeline: último anual + trimestrales
-   del año en curso. Reporta encontrado / faltante — no bloquea, informa.
+   del año en curso. Transcripts: opcionales, pero si existen se reportan como
+   ENCONTRADOS — el pipeline los considera (guidance). Reporta encontrado /
+   faltante — no bloquea, informa.
+3b. `brand/` se crea siempre (vacía está bien). Si el usuario entregó un
+   DESIGN.md o menciona colores de marca, va ahí — xlsx-building lo carga al
+   construir el modelo.
 4. Verifica que `workspace/macro-view.yaml` existe (si no: crear desde template,
    vacío, y avisar).
 

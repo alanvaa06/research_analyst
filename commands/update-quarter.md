@@ -18,7 +18,7 @@ actual-vs-driver + calibración. Uso: `/update-quarter <TICKER> [filing nuevo]`.
 | Paso | Skill | Qué hace |
 |---|---|---|
 | 1 | `coverage-folders` | Archiva el filing con naming estándar |
-| 2 | `statement-mapper` | Captura el trimestre, cada cifra con cita; gate de mapeo |
+| 2 | `statement-mapper` | Captura el trimestre, cada cifra con cita; si hay transcript del call en `earnings-transcripts/`, extrae su guidance (obligatorio); gate de mapeo |
 | 3 | `impact-triage` | **Triage del diff ANTES de tocar el modelo**: crítico/relevante/cosmético con racional; gate del analista |
 | 4 | `model-standards` | Integra lo aprobado; re-corre integrity-checks completa |
 | 5 | `driver-inventory` | Actual vs driver por driver; append a forecast-accuracy.md; debate de calibración |

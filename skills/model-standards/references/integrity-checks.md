@@ -60,7 +60,7 @@ externo se audita igual.
 | F1 | Gridlines ocultas | `showGridLines = False` en TODAS las hojas visibles |
 | F2 | Fuente estándar | Una sola familia (Arial Narrow) en celdas usadas |
 | F3 | Colores de fuente | Whitelist: negro, azul input `FF0000FF`, verde link `FF00CC00`, rojo warn, blanco |
-| F4 | Paleta de fills | Whitelist: navy `FF132E57`, naranja `FFED942D`, teal `FF1E8496`, amarillo input `FFFFF2CC`, gris escenario |
+| F4 | Paleta de fills | Whitelist: navy `FF132E57`, naranja `FFED942D`, teal `FF1E8496`, amarillo input `FFFFF2CC`, gris escenario. Con `brand/DESIGN.md` presente, sus 3 slots se suman a la whitelist (pasar el archivo al audit) |
 | F5 | Formatos numéricos | Whitelist literal (miles con paréntesis y guion-cero, %, 0.0x, USD, fecha, A/E, `;;;`) |
 | F6 | Freeze panes | Presente en hojas de datos (Assumptions/IS/BS/CF/Ratios/Schedules/Rev_Reconcile/Val_*) |
 | F7 | Outline en Schedules | Tab `Schedules` existe y tiene filas agrupadas (bloques colapsables) |

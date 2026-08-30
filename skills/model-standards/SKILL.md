@@ -60,7 +60,9 @@ Falta un contrato → detente y repórtalo; no construyas parcial ni inventes el
 
 Sobre cualquier xlsx (aunque no lo haya creado el plugin): corre la lista completa de
 `integrity-checks.md`, reporta `[ok]/[x]` por check con celdas afectadas. No edites
-el modelo ajeno sin instrucción explícita del usuario.
+el modelo ajeno sin instrucción explícita del usuario. Si el usuario pide
+RECONSTRUIRLO al estándar: modo rebuild de `xlsx-building` (audit primero →
+gate → rebuild con contenido preservado → paridad obligatoria).
 
 Precondición standalone: ninguna. Es el punto de entrada más barato del plugin.
 

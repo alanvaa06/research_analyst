@@ -44,6 +44,27 @@ las best practices escritas y entregó Calibri con gridlines).
    Exit 0 = formato verde. Exit 1 = FALLA: corrige y re-corre. Nunca entregues
    con audit rojo. Luego corren S/C/D (integrity-checks.md).
 
+## Modo rebuild (modelo existente → modelo al estándar)
+
+Cuando el usuario entrega un xlsx (del plugin viejo o ajeno) y pide
+reconstruirlo, el orden es fijo:
+
+1. **Audit primero**: corre la lista completa S/C/D/F sobre el modelo viejo
+   (`integrity-checks.md` + `python tools/xlsx_builder.py audit`). Presenta la
+   tabla de violaciones — QUÉ viola y POR QUÉ se va a reconstruir.
+2. **Gate**: mostrar al usuario qué se PRESERVA (valores, etiquetas de fila,
+   lógica de fórmulas, supuestos) y qué se DESCARTA (todo el formato, tabs
+   `Sch_*`, series partidas). Sin aprobación no hay rebuild.
+3. **Rebuild**: el modelo viejo es FUENTE DE CONTENIDO, jamás de formato —
+   extrae valores/labels/fórmulas con openpyxl y reconstruye vía `ModelStyler`
+   contra el model-spec vigente. Versión nueva `_YYYY-MM-DD_v#`; el original
+   queda intacto (nada se borra).
+4. **Re-audit + paridad (obligatorio)**: checks F en verde Y check de paridad —
+   los outputs clave del viejo y el nuevo coinciden (balance check, revenue por
+   periodo, resultado de valuación). Divergencia = FALLA con celdas afectadas:
+   reconstruir jamás cambia números en silencio. Diferencias INTENCIONALES
+   (ej. corregir un hardcode) se listan explícitas en el reporte.
+
 ## Qué NO hace esta skill
 
 - No decide contenido ni supuestos (eso es driver-inventory / el analista).

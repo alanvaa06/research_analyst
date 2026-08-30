@@ -2,7 +2,10 @@
 
 Cada check es determinista: fórmula en la tab `Checks` o escaneo por código (openpyxl).
 La celda de error del Cover agrega TODOS. Un check rojo = el comando reporta FALLA,
-nunca éxito. Orden: primero estructura, luego contabilidad, luego contenido.
+nunca éxito. Orden: estructura → contabilidad → contenido → formato.
+
+Los checks F corren con `python tools/xlsx_builder.py audit <modelo.xlsx>` —
+implementación única, cero interpretación del agente.
 
 ## Estructurales (escaneo por código)
 
@@ -45,10 +48,29 @@ nunca éxito. Orden: primero estructura, luego contabilidad, luego contenido.
 | D9 | **Calidad de utilidades**: CFO/NI < 1 en ≥ 2 periodos consecutivos, o accruals ratio fuera de la banda histórica de la emisora | aviso, no bloqueo; material de entrevista |
 | D4b | **g implícita de mercado** (reverse DCF en Val_DCF) vs g terminal del analista | divergencia grande = pregunta obligada en entrevista de cierre; nunca bloquea |
 
+## De formato (checks F — `tools/xlsx_builder.py audit`)
+
+Whitelists exactas viven en el código (`tools/xlsx_builder.py`), derivadas del
+corpus CFI (2026-08-30). El builder pasa estos checks por construcción; un modelo
+externo se audita igual.
+
+| # | Check | Regla |
+|---|---|---|
+| F1 | Gridlines ocultas | `showGridLines = False` en TODAS las hojas visibles |
+| F2 | Fuente estándar | Una sola familia (Arial Narrow) en celdas usadas |
+| F3 | Colores de fuente | Whitelist: negro, azul input `FF0000FF`, verde link `FF00CC00`, rojo warn, blanco |
+| F4 | Paleta de fills | Whitelist: navy `FF132E57`, naranja `FFED942D`, teal `FF1E8496`, amarillo input `FFFFF2CC`, gris escenario |
+| F5 | Formatos numéricos | Whitelist literal (miles con paréntesis y guion-cero, %, 0.0x, USD, fecha, A/E, `;;;`) |
+| F6 | Freeze panes | Presente en hojas de datos (Assumptions/IS/BS/CF/Ratios/Schedules/Rev_Reconcile/Val_*) |
+| F7 | Outline en Schedules | Tab `Schedules` existe y tiene filas agrupadas (bloques colapsables) |
+| F8 | Sin hojas basura | Ninguna `Sch_*`, `Hoja1`, `Sheet1` (refuerza S9) |
+| F9 | Headers de periodo A/E | Formatos `0"A"` / `0"E"` presentes en la fila de años |
+| F10 | Sello del builder | Custom property `research_analyst_builder` presente — el modelo se construyó vía `tools/xlsx_builder.py`. En modelo externo: `[aviso]`, no falla |
+
 ## Reporte de /model-check
 
 ```
-[ok] / [x] por check, agrupado S / C / D
+[ok] / [x] por check, agrupado S / C / D / F
 Resumen: N ok, M fallas, K avisos
 Falla => exit report "FALLA", lista de celdas/hojas afectadas, siguiente acción sugerida
 ```

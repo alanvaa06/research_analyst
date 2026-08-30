@@ -33,9 +33,10 @@ Falta un contrato → detente y repórtalo; no construyas parcial ni inventes el
 
 1. Lee los cinco contratos. Confirma con el usuario: periodos históricos, horizonte,
    métodos activos (del perfil — puede sobreescribir).
-2. Genera el xlsx con herramienta determinista (openpyxl o equivalente) siguiendo
-   `model-spec.md`: tabs en orden, colores y convenciones de
-   `references/excel-practices.md`.
+2. Genera el xlsx VÍA `tools/xlsx_builder.py` (skill `xlsx-building` —
+   obligatoria, nunca openpyxl crudo para estructura/formato) siguiendo
+   `model-spec.md`: tabs en orden, formato 100% por código
+   (`references/excel-practices.md` es el contrato legible).
 3. **UNA sola tab `Schedules`**: un bloque `Sch: <nombre>` por driver del
    driver-map, apilados, más los bloques core (PPE, Debt, WC). Jamás una tab por
    schedule — menos tabs, mejor (check S9). El build-up de revenue sale de los
@@ -46,8 +47,10 @@ Falta un contrato → detente y repórtalo; no construyas parcial ni inventes el
 5. Pestañas de valuación según métodos activos — fórmulas y convenciones exactas en
    `references/valuation-conventions.md` (incluye bloque Hamada, reverse DCF y
    múltiplos justificados + PVGO). Usuario en el loop en cada supuesto.
-6. Corre TODOS los checks de `references/integrity-checks.md`. Cualquier rojo:
-   arregla estructura/fórmulas (nunca "ajustes" a cifras observadas) y re-corre.
+6. Corre TODOS los checks de `references/integrity-checks.md` — S/C/D más los F
+   de formato (`python tools/xlsx_builder.py audit <modelo>`, exit 0 exigido).
+   Cualquier rojo: arregla estructura/fórmulas (nunca "ajustes" a cifras
+   observadas) y re-corre.
 7. Entrega solo con checks verdes. Check rojo irresoluble = reporta FALLA con celdas
    afectadas. Un modelo que "casi cuadra" no existe.
 

@@ -1,0 +1,403 @@
+"""Deterministic xlsx style/scaffold engine for the research_analyst plugin.
+
+Doctrine: format is CODE, not model judgement. model-standards builds every
+workbook THROUGH this module (never raw openpyxl styling), and /model-check
+runs ``audit_format`` (checks F) against any workbook, plugin-built or not.
+
+Empirical basis: CFI workbook corpus (3-Statement Model Complete, AMZN
+Advanced case, Valuation Model, template library) extracted 2026-08-30.
+
+Console output policy: ASCII only ([ok]/[x], no unicode symbols).
+
+Usage as CLI:
+    python tools/xlsx_builder.py audit <path.xlsx>     -> run checks F, exit 1 on failure
+    python tools/xlsx_builder.py demo  <path.xlsx>     -> build a skeleton (self-test)
+"""
+
+from __future__ import annotations
+
+import sys
+from dataclasses import dataclass
+from enum import Enum, auto
+from typing import Iterable, Optional
+
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
+from openpyxl.workbook.properties import CalcProperties
+from openpyxl.worksheet.worksheet import Worksheet
+
+# ---------------------------------------------------------------------------
+# Contract constants (the ONLY allowed values; checks F enforce the whitelists)
+# ---------------------------------------------------------------------------
+
+BUILDER_STAMP_KEY = "research_analyst_builder"
+BUILDER_STAMP_VALUE = "xlsx_builder v1"
+
+FONT_NAME = "Arial Narrow"
+
+
+class Color(str, Enum):
+    """Palette (ARGB). Empirical CFI values."""
+
+    NAVY = "FF132E57"        # brand bar, cover blocks
+    ORANGE = "FFED942D"      # section headers
+    TEAL = "FF1E8496"        # accents / dashboard tab color
+    INPUT_BLUE = "FF0000FF"  # analyst input font
+    LINK_GREEN = "FF00CC00"  # cross-sheet link font
+    WARN_RED = "FFFF0000"    # error font
+    WHITE = "FFFFFFFF"
+    BLACK = "FF000000"
+    INPUT_FILL = "FFFFF2CC"  # light yellow input shading
+    SCENARIO_FILL = "FFF2F2F2"  # light gray scenario areas
+
+
+class NumFmt(str, Enum):
+    """Number-format whitelist (literal CFI strings)."""
+
+    GENERAL = "General"
+    NUM = '_-* #,##0_-;\\(#,##0\\)_-;_-* "-"_-;_-@_-'   # thousands, (neg), dash zero
+    NUM_RED = "#,##0_);[Red](#,##0);-"                   # red negatives variant
+    PCT1 = "0.0%"
+    PCT2 = "0.00%"
+    DEC2 = "0.00"
+    MULT = "0.0\\x"                                       # 12.3x
+    USD = '"$"#,##0_);\\("$"#,##0\\)'
+    USD_CENTS = '"$"#,##0.00_);\\("$"#,##0.00\\)'
+    YEAR_A = '0"A"'                                       # 2025A
+    YEAR_E = '0"E"'                                       # 2026E
+    DATE = "mm-dd-yy"
+    HIDDEN = ";;;"
+
+
+class CellRole(Enum):
+    """Semantic cell roles -> font color mapping (traceability contract)."""
+
+    LABEL = auto()      # black text
+    INPUT = auto()      # blue font + yellow fill (analyst assumption)
+    OBSERVED = auto()   # blue font, NO fill (historical, cited in comment)
+    FORMULA = auto()    # black font
+    LINK = auto()       # green font (pulls from another sheet)
+    WARN = auto()       # red font
+
+
+_ROLE_FONT_COLOR: dict[CellRole, Color] = {
+    CellRole.LABEL: Color.BLACK,
+    CellRole.INPUT: Color.INPUT_BLUE,
+    CellRole.OBSERVED: Color.INPUT_BLUE,
+    CellRole.FORMULA: Color.BLACK,
+    CellRole.LINK: Color.LINK_GREEN,
+    CellRole.WARN: Color.WARN_RED,
+}
+
+_THIN = Side(style="thin")
+_DOUBLE = Side(style="double")
+
+# Sheets that must carry frozen panes (data grids). Cover/Checks/Summary exempt.
+FROZEN_SHEET_PREFIXES = ("Assumptions", "Macro", "IS", "BS", "CF", "Ratios",
+                         "Schedules", "Rev_Reconcile", "Val_", "Quarterly")
+
+JUNK_SHEET_NAMES = ("Hoja1", "Hoja2", "Sheet1", "Sheet2", "Hoja 1", "Sheet 1")
+
+
+@dataclass(frozen=True)
+class PeriodHeader:
+    """Year header spec: e.g. 2019..2031, actuals through 2025."""
+
+    first_year: int
+    last_year: int
+    last_actual_year: int
+
+
+# ---------------------------------------------------------------------------
+# Builder
+# ---------------------------------------------------------------------------
+
+
+class ModelStyler:
+    """Owns a Workbook and applies the format contract. One instance per model."""
+
+    def __init__(self, units_label: str = "USD millones salvo indicado") -> None:
+        self.wb: Workbook = Workbook()
+        self.units_label = units_label
+        default = self.wb.active
+        if default is not None:
+            self.wb.remove(default)
+        self.wb.calculation = CalcProperties(calcMode="auto", fullCalcOnLoad=True)
+        self._stamp()
+
+    # -- workbook level -----------------------------------------------------
+
+    def _stamp(self) -> None:
+        """Custom doc property proving builder provenance (check F10)."""
+        self.wb.properties.keywords = f"{BUILDER_STAMP_KEY}={BUILDER_STAMP_VALUE}"
+
+    def define_constant(self, name: str, sheet: str, coord: str) -> None:
+        """Named range for a labeled constant (e.g. DAYS_YEAR) — kills hardcodes."""
+        from openpyxl.workbook.defined_name import DefinedName
+        ref = f"'{sheet}'!${coord[0]}${coord[1:]}"
+        self.wb.defined_names.add(DefinedName(name, attr_text=ref))
+
+    def save(self, path: str) -> None:
+        self.wb.save(path)
+
+    # -- sheet level --------------------------------------------------------
+
+    def new_sheet(self, name: str, freeze: Optional[str] = "C4",
+                  tab_color: Optional[Color] = None) -> Worksheet:
+        ws = self.wb.create_sheet(name)
+        ws.sheet_view.showGridLines = False
+        if freeze:
+            ws.freeze_panes = freeze
+        if tab_color is not None:
+            ws.sheet_properties.tabColor = tab_color.value
+        return ws
+
+    def brand_bar(self, ws: Worksheet, title: str, last_col: int = 18) -> None:
+        """Rows 1-2: navy bar + sheet title + units note. Row 3 reserved for checks."""
+        for col in range(1, last_col + 1):
+            for row in (1, 2):
+                cell = ws.cell(row=row, column=col)
+                cell.fill = PatternFill("solid", fgColor=Color.NAVY.value)
+        c = ws.cell(row=1, column=1, value="(c) research_analyst - todos los supuestos son del analista")
+        c.font = Font(name=FONT_NAME, size=8, color=Color.WHITE.value)
+        t = ws.cell(row=2, column=1, value=title)
+        t.font = Font(name=FONT_NAME, size=16, bold=True, color=Color.WHITE.value)
+        u = ws.cell(row=2, column=4, value=f"({self.units_label})")
+        u.font = Font(name=FONT_NAME, size=11, color=Color.WHITE.value)
+
+    def period_header(self, ws: Worksheet, row: int, first_col: int,
+                      spec: PeriodHeader) -> None:
+        """Year row with A/E suffix formats (2025A / 2026E)."""
+        col = first_col
+        for year in range(spec.first_year, spec.last_year + 1):
+            cell = ws.cell(row=row, column=col, value=year)
+            fmt = NumFmt.YEAR_A if year <= spec.last_actual_year else NumFmt.YEAR_E
+            cell.number_format = fmt.value
+            cell.font = Font(name=FONT_NAME, size=11, bold=True)
+            cell.alignment = Alignment(horizontal="center")
+            col += 1
+
+    def check_row(self, ws: Worksheet, row: int, first_col: int, n_cols: int,
+                  formula_template: str) -> None:
+        """Per-column check row near the top (frozen visible). Template uses {col}."""
+        label = ws.cell(row=row, column=1, value="Balance Sheet Check")
+        label.font = Font(name=FONT_NAME, size=11, bold=True)
+        for i in range(n_cols):
+            col_letter = get_column_letter(first_col + i)
+            cell = ws.cell(row=row, column=first_col + i,
+                           value=formula_template.format(col=col_letter))
+            cell.font = Font(name=FONT_NAME, size=11, color=Color.WARN_RED.value)
+            cell.alignment = Alignment(horizontal="center")
+
+    # -- row/cell level -----------------------------------------------------
+
+    def section_header(self, ws: Worksheet, row: int, title: str,
+                       last_col: int = 18) -> None:
+        """Orange band, bold 14 — one per model section."""
+        for col in range(1, last_col + 1):
+            ws.cell(row=row, column=col).fill = PatternFill(
+                "solid", fgColor=Color.ORANGE.value)
+        c = ws.cell(row=row, column=1, value=title)
+        c.font = Font(name=FONT_NAME, size=14, bold=True)
+
+    def subsection(self, ws: Worksheet, row: int, title: str) -> None:
+        c = ws.cell(row=row, column=1, value=title)
+        c.font = Font(name=FONT_NAME, size=12, bold=True)
+
+    def schedule_block_header(self, ws: Worksheet, row: int, name: str) -> None:
+        """Header of one 'Sch: <name>' block inside the single Schedules sheet."""
+        self.subsection(ws, row, f"Sch: {name}")
+
+    def set_cell(self, ws: Worksheet, coord: str, value: object, role: CellRole,
+                 numfmt: NumFmt = NumFmt.NUM, size: int = 11,
+                 bold: bool = False) -> None:
+        cell = ws[coord]
+        cell.value = value
+        cell.font = Font(name=FONT_NAME, size=size, bold=bold,
+                         color=_ROLE_FONT_COLOR[role].value)
+        cell.number_format = numfmt.value
+        if role is CellRole.INPUT:
+            cell.fill = PatternFill("solid", fgColor=Color.INPUT_FILL.value)
+
+    def subtotal_border(self, ws: Worksheet, row: int, first_col: int,
+                        n_cols: int) -> None:
+        for i in range(n_cols):
+            ws.cell(row=row, column=first_col + i).border = Border(top=_THIN)
+
+    def total_border(self, ws: Worksheet, row: int, first_col: int,
+                     n_cols: int) -> None:
+        for i in range(n_cols):
+            ws.cell(row=row, column=first_col + i).border = Border(
+                top=_THIN, bottom=_DOUBLE)
+
+    def group_rows(self, ws: Worksheet, start: int, end: int,
+                   hidden: bool = False) -> None:
+        """Outline level 1 so sections collapse to summary view."""
+        for r in range(start, end + 1):
+            ws.row_dimensions[r].outlineLevel = 1
+            ws.row_dimensions[r].hidden = hidden
+
+    def label_col_width(self, ws: Worksheet, width: float = 42.0) -> None:
+        ws.column_dimensions["A"].width = width
+
+
+# ---------------------------------------------------------------------------
+# Checks F — format audit (deterministic, any workbook)
+# ---------------------------------------------------------------------------
+
+_ALLOWED_FONT_COLORS = {c.value for c in (
+    Color.INPUT_BLUE, Color.LINK_GREEN, Color.WARN_RED, Color.WHITE, Color.BLACK)}
+_ALLOWED_FONT_COLORS.add("FF333333")  # near-black tolerated
+_ALLOWED_FILLS = {c.value for c in (
+    Color.NAVY, Color.ORANGE, Color.TEAL, Color.INPUT_FILL, Color.SCENARIO_FILL)}
+_ALLOWED_NUMFMTS = {f.value for f in NumFmt}
+
+_MAX_SCAN_ROWS = 400
+_MAX_SCAN_COLS = 40
+
+
+@dataclass(frozen=True)
+class Finding:
+    check: str
+    ok: bool
+    detail: str
+
+
+def _scan_fonts_fills_formats(ws: Worksheet) -> tuple[set[str], set[str], set[str], set[str]]:
+    font_names: set[str] = set()
+    font_colors: set[str] = set()
+    fills: set[str] = set()
+    numfmts: set[str] = set()
+    for row in ws.iter_rows(min_row=1, max_row=min(ws.max_row, _MAX_SCAN_ROWS),
+                            max_col=min(ws.max_column, _MAX_SCAN_COLS)):
+        for cell in row:
+            if cell.value is None:
+                continue
+            font = cell.font
+            if font is not None and font.name:
+                font_names.add(str(font.name))
+                rgb = getattr(font.color, "rgb", None) if font.color else None
+                if isinstance(rgb, str):
+                    font_colors.add(rgb)
+            if cell.fill is not None and cell.fill.patternType == "solid":
+                rgb = getattr(cell.fill.fgColor, "rgb", None)
+                if isinstance(rgb, str) and rgb != "00000000":
+                    fills.add(rgb)
+            numfmts.add(cell.number_format)
+    return font_names, font_colors, fills, numfmts
+
+
+def audit_format(path: str) -> list[Finding]:
+    """Run checks F1-F10 on a workbook. Pure read; returns findings."""
+    wb = load_workbook(path, data_only=False)
+    findings: list[Finding] = []
+    visible = [wb[n] for n in wb.sheetnames if wb[n].sheet_state == "visible"]
+
+    # F1 gridlines off everywhere
+    bad = [ws.title for ws in visible if ws.sheet_view.showGridLines in (True, None)]
+    findings.append(Finding("F1 gridlines off", not bad, ", ".join(bad) or "todas ok"))
+
+    all_fonts: set[str] = set()
+    all_colors: set[str] = set()
+    all_fills: set[str] = set()
+    all_fmts: set[str] = set()
+    for ws in visible:
+        fn, fc, fl, nf = _scan_fonts_fills_formats(ws)
+        all_fonts |= fn
+        all_colors |= fc
+        all_fills |= fl
+        all_fmts |= nf
+
+    # F2 single standard font family
+    alien_fonts = sorted(all_fonts - {FONT_NAME})
+    findings.append(Finding("F2 fuente estandar", not alien_fonts,
+                            ", ".join(alien_fonts) or FONT_NAME))
+    # F3 font colors within whitelist
+    alien_colors = sorted(all_colors - _ALLOWED_FONT_COLORS)
+    findings.append(Finding("F3 colores de fuente", not alien_colors,
+                            ", ".join(alien_colors) or "whitelist ok"))
+    # F4 fills within palette
+    alien_fills = sorted(all_fills - _ALLOWED_FILLS)
+    findings.append(Finding("F4 paleta de fills", not alien_fills,
+                            ", ".join(alien_fills) or "whitelist ok"))
+    # F5 number formats within whitelist
+    alien_fmts = sorted(all_fmts - _ALLOWED_NUMFMTS)
+    findings.append(Finding("F5 formatos numericos", not alien_fmts,
+                            "; ".join(alien_fmts[:6]) or "whitelist ok"))
+    # F6 frozen panes on data sheets
+    no_freeze = [ws.title for ws in visible
+                 if ws.title.startswith(FROZEN_SHEET_PREFIXES) and not ws.freeze_panes]
+    findings.append(Finding("F6 freeze panes", not no_freeze,
+                            ", ".join(no_freeze) or "ok"))
+    # F7 outline grouping in Schedules
+    sched = next((ws for ws in visible if ws.title == "Schedules"), None)
+    if sched is None:
+        findings.append(Finding("F7 outline en Schedules", False, "tab Schedules no existe"))
+    else:
+        grouped = sum(1 for d in sched.row_dimensions.values() if d.outlineLevel)
+        findings.append(Finding("F7 outline en Schedules", grouped > 0,
+                                f"{grouped} filas agrupadas"))
+    # F8 no junk sheets, no Sch_* sheets
+    junk = [n for n in wb.sheetnames if n in JUNK_SHEET_NAMES or n.startswith("Sch_")]
+    findings.append(Finding("F8 sin hojas basura/Sch_*", not junk,
+                            ", ".join(junk) or "ok"))
+    # F9 A/E period formats present somewhere
+    has_ae = any(f in all_fmts for f in (NumFmt.YEAR_A.value, NumFmt.YEAR_E.value))
+    findings.append(Finding("F9 headers de periodo A/E", has_ae,
+                            "presentes" if has_ae else "sin formato 0\"A\"/0\"E\""))
+    # F10 builder stamp
+    kw = wb.properties.keywords or ""
+    stamped = BUILDER_STAMP_KEY in kw
+    findings.append(Finding("F10 sello del builder", stamped,
+                            kw if stamped else "sin sello (no construido por xlsx_builder)"))
+    return findings
+
+
+def _print_report(findings: Iterable[Finding]) -> int:
+    failures = 0
+    for f in findings:
+        mark = "[ok]" if f.ok else "[x]"
+        if not f.ok:
+            failures += 1
+        print(f"{mark} {f.check}: {f.detail}")
+    print(f"Resumen F: {sum(1 for f in findings if f.ok)} ok, {failures} fallas")
+    return 1 if failures else 0
+
+
+def _demo(path: str) -> None:
+    """Self-test skeleton: proves the builder passes its own audit."""
+    styler = ModelStyler()
+    spec = PeriodHeader(first_year=2019, last_year=2031, last_actual_year=2025)
+    for name in ("Cover", "Checks", "Assumptions", "Macro", "IS", "BS", "CF",
+                 "Ratios", "Schedules", "Rev_Reconcile", "Val_DCF", "Val_Comps",
+                 "Sensitivity", "Summary"):
+        freeze = "C4" if name.startswith(FROZEN_SHEET_PREFIXES) else None
+        ws = styler.new_sheet(name, freeze=freeze)
+        styler.brand_bar(ws, name)
+        styler.label_col_width(ws)
+        if name.startswith(FROZEN_SHEET_PREFIXES):
+            styler.period_header(ws, 3, 3, spec)
+    sched = styler.wb["Schedules"]
+    row = 5
+    for block in ("PPE", "Debt", "WC"):
+        styler.schedule_block_header(sched, row, block)
+        styler.group_rows(sched, row + 1, row + 4)
+        styler.subtotal_border(sched, row + 4, 3, 13)
+        row += 6
+    styler.save(path)
+    print(f"[ok] demo escrito: {path}")
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) == 3 and argv[1] == "audit":
+        return _print_report(audit_format(argv[2]))
+    if len(argv) == 3 and argv[1] == "demo":
+        _demo(argv[2])
+        return _print_report(audit_format(argv[2]))
+    print("uso: python xlsx_builder.py audit|demo <path.xlsx>")
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

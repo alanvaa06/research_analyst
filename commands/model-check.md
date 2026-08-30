@@ -15,8 +15,10 @@ Uso: `/model-check [ruta del xlsx]` (default: el modelo vigente de la cobertura 
 ## Ejecución
 
 Corre la lista completa de `skills/model-standards/references/integrity-checks.md`
-en orden S (estructurales) → C (contables) → D (contenido). Solo lectura: este
-comando NUNCA modifica el modelo.
+en orden S (estructurales) → C (contables) → D (contenido) → F (formato). Los F
+corren con `python tools/xlsx_builder.py audit <modelo.xlsx>` — implementación
+única, exit 1 = falla. Solo lectura: este comando NUNCA modifica el modelo.
+En modelo externo, F10 (sello del builder) se reporta `[aviso]`, no falla.
 
 ## Reporte
 
@@ -25,6 +27,7 @@ MODEL CHECK — <archivo>  [fecha]
 Estructurales : [ok] x N   [x] ...celda/hoja...
 Contables     : [ok] x N   [x] ...
 Contenido     : [ok] x N   [aviso] ...   [n/a] ...
+Formato (F)   : [ok] x N   [x] ...   (tools/xlsx_builder.py audit)
 Resumen: N ok · M fallas · K avisos
 Veredicto: VERDE | FALLA (con siguiente acción sugerida por cada falla)
 ```

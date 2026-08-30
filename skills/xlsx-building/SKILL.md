@@ -1,0 +1,52 @@
+---
+name: xlsx-building
+description: Construcción determinista del xlsx del plugin — TODO workbook se arma vía tools/xlsx_builder.py (ModelStyler), jamás con openpyxl crudo; formato (paleta, fuentes, formatos numéricos, gridlines, freeze, outline, bordes) sale del código, no del juicio del modelo, y se verifica con los checks F. Usa esta skill siempre que haya que crear o editar un archivo Excel del plugin, aplicar o corregir formato de un modelo, correr el audit de formato, o cuando el usuario diga "construye el xlsx", "formatea el modelo", "el modelo salió feo", "corre el audit de formato" — model-standards la invoca en su paso de construcción y es obligatoria: si un xlsx se va a escribir y esta skill no está en uso, detente y cárgala.
+---
+
+# xlsx-building
+
+Capa determinista de construcción. Regla única: **ningún workbook del plugin se
+escribe sin `tools/xlsx_builder.py`**. El módulo es la implementación; esta
+skill es el procedimiento; los checks F son la verificación. Prosa no construye
+formato — código sí (lección del smoke test AAPL 2026-08-30: el agente tenía
+las best practices escritas y entregó Calibri con gridlines).
+
+## Procedimiento
+
+1. **Scaffold**: instancia `ModelStyler` (fija calc auto + sello F10). Crea cada
+   tab con `new_sheet` (gridlines off + freeze), `brand_bar`, `label_col_width`,
+   `period_header` (sufijos A/E). Tabs y orden: `templates/model-spec.md`.
+2. **Secciones**: `section_header` (banda naranja) / `subsection`. En la tab
+   `Schedules`: un bloque por schedule con `schedule_block_header` ("Sch: X") y
+   `group_rows` sobre el contenido — JAMÁS una hoja por schedule.
+3. **Contenido**: toda celda vía `set_cell` con su `CellRole` (INPUT / OBSERVED /
+   FORMULA / LINK / WARN / LABEL) y `NumFmt` de la whitelist. El role fija color
+   y fill — no elijas colores.
+4. **Constantes**: 365, 1000 y similares como celdas etiquetadas en Assumptions
+   con `define_constant` (`DAYS_YEAR`, `MM_TO_B`); las fórmulas referencian el
+   named range, nunca el literal (check S4).
+5. **Checks arriba**: `check_row` en fila 3 de IS/BS/CF (balance / tie-out por
+   columna, estilo `=+IF(ABS(a-b)>0.0001,"Error","OK")`).
+6. **Bordes**: `subtotal_border` / `total_border` — no bordes manuales.
+7. **Verificación obligatoria antes de entregar**:
+
+   ```
+   python tools/xlsx_builder.py audit <modelo.xlsx>
+   ```
+
+   Exit 0 = formato verde. Exit 1 = FALLA: corrige y re-corre. Nunca entregues
+   con audit rojo. Luego corren S/C/D (integrity-checks.md).
+
+## Qué NO hace esta skill
+
+- No decide contenido ni supuestos (eso es driver-inventory / el analista).
+- No inventa estilos: si necesitas un formato que no está en la whitelist, la
+  respuesta es proponer extender `xlsx_builder.py` + checks F con el usuario —
+  no aplicarlo ad hoc.
+- No toca modelos externos sin instrucción (audit sí — es solo lectura).
+
+## Referencias
+
+- `tools/xlsx_builder.py` — implementación única (paleta, NumFmt, roles, audit F).
+- `skills/model-standards/references/excel-practices.md` — el contrato legible.
+- `skills/model-standards/references/integrity-checks.md` — checks F en la lista.

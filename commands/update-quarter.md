@@ -9,6 +9,10 @@ actual-vs-driver + calibración. Uso: `/update-quarter <TICKER> [filing nuevo]`.
 2. **Baseline verde:** el modelo vigente pasa TODOS los checks ANTES de tocar nada.
    Roto ⇒ arreglar primero vía `/model-check`; nunca actualizar sobre un modelo roto.
 3. Filing nuevo identificado, legible y no capturado previamente (anti-doble-captura).
+   Sin filing entregado + emisora SEC ⇒ ofrecer bajarlo (gate — preguntar):
+   `python tools/sec_fetch.py <TICKER> --since <inicio del trimestre> --dest
+   workspace/<TICKER>/filings/sec --ua "<nombre correo>"`; coverage-folders
+   renombra del manifest a la convención.
 4. **Respaldo:** copia del modelo con versión nueva `_YYYY-MM-DD_v#` ANTES de editar.
 5. Guard MNPI: el documento nuevo es público (un evento relevante filtrado antes de
    su publicación es exactamente el caso que este guard existe para atrapar).

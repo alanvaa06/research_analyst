@@ -42,7 +42,10 @@ _EXHIBIT_SKIP_SUFFIXES = (".jpg", ".jpeg", ".gif", ".png", ".xml", ".xsd",
                           ".css", ".js", ".json", ".txt", ".zip", ".paper")
 
 DEFAULT_FORMS = ("10-K", "10-Q", "8-K")
-DEFAULT_SINCE = "2016-01-01"
+# Perspectiva de largo plazo: el default es TODA la historia electronica de
+# EDGAR (arranca 1994) — ciclos completos de margenes y drivers. --since existe
+# para que el ANALISTA recorte, no para proponer subconjuntos.
+DEFAULT_SINCE = "1994-01-01"
 THROTTLE_SECONDS = 0.25
 
 

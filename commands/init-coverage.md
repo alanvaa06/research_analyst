@@ -16,7 +16,11 @@ Gates de usuario en cada transición + protocolo de debate
    presentes). `brand/DESIGN.md` presente ⇒ xlsx-building lo usará para los
    colores de marca del modelo.
    **Filings faltantes + emisora SEC ⇒ ofrecer descarga** (gate — preguntar,
-   nunca descargar solo). ANTES de ofrecer, probar conectividad: en entornos
+   nunca descargar solo). La propuesta default es la HISTORIA COMPLETA
+   (todos los 10-K + 10-Q + 8-K disponibles; `sec_fetch` ya arranca en 1994 y
+   `xbrl_fetch` trae todo) — perspectiva de largo plazo del plugin. JAMÁS
+   proponer subconjuntos arbitrarios ("10 años", "solo el último año"): el
+   gate del analista existe para recortar si ÉL quiere. ANTES de ofrecer, probar conectividad: en entornos
    con egress restringido (Claude Cowork, sandboxes) los tools reportan el
    bloqueo con opciones — la correcta suele ser permitir `www.sec.gov` y
    `data.sec.gov` en el allowlist del entorno; JAMÁS sustituir el filing

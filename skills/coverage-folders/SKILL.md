@@ -24,10 +24,16 @@ metadatos, mueve y renombra. Las demás skills solo leen rutas.
    periodo, y renombra según la convención
    (`<TICKER>_<tipo>_<periodo>[_fecha].<ext>`). Transcripts van a
    `transcripts/`. Ambigüedad ⇒ preguntar.
-3. Checklist de faltantes contra el mínimo del pipeline: último anual + trimestrales
-   del año en curso. Transcripts: opcionales, pero si existen se reportan como
-   ENCONTRADOS — el pipeline los considera (guidance). Reporta encontrado /
-   faltante — no bloquea, informa.
+3. Checklist de faltantes contra la **HISTORIA COMPLETA disponible** — el
+   default del plugin es perspectiva de largo plazo: TODOS los 10-K y 10-Q (y
+   equivalentes BMV) que existan, porque los drivers, márgenes y calibración se
+   analizan a través de ciclos completos, no de un año. El "último anual +
+   trimestrales del año" es el PISO para arrancar el pipeline, jamás el
+   objetivo ni la propuesta de descarga: al ofrecer `sec_fetch`/`xbrl_fetch`,
+   la propuesta default es historia completa y el gate del analista existe
+   para RECORTAR, no al revés. Transcripts: opcionales, pero si existen se
+   reportan como ENCONTRADOS — el pipeline los considera (guidance). Reporta
+   encontrado / faltante — no bloquea, informa.
 3b. `brand/` se crea siempre (vacía está bien). Si el usuario entregó un
    DESIGN.md o menciona colores de marca, va ahí — xlsx-building lo carga al
    construir el modelo.

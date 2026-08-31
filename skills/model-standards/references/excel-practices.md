@@ -12,19 +12,18 @@ freeze y outline salen del módulo. `/model-check` audita esto con los checks F
 
 ## Estructura
 
-- **El modelo vive en UNA hoja `Model`** con secciones apiladas y outline:
-  Assumptions → IS → BS → CF → DCF → Ratios → Schedules (convención CFI: su
-  "Financial Model" mete estados + schedules + valuación en una sola hoja de
-  274 filas colapsable). Tabs aparte solo para granularidad o estructura
-  distinta: Quarterly, Rev_Reconcile, Val_Comps, Sensitivity, Summary.
+- **Dos hojas por granularidad y propósito** (modo `quarterly`, diseño
+  2026-08-31): `Operating` = el operating model TRIMESTRAL PURO (secciones
+  Assumptions → IS → BS → CF → Ratios → Schedules con outline; única zona de
+  input); `Annual` = agregados por fórmula (flujos Σ4Q, stocks 4Q, ratios
+  recalculados; cero tecleo) + sección DCF línea por línea. Modo `annual`:
+  una hoja `Model`. Tabs aparte solo para estructura distinta: Rev_Reconcile,
+  Val_Comps, Sensitivity, Summary, Macro.
 - Menos tabs, mejor. El conteo de tabs es fijo (model-spec); crecen secciones.
-- Modo `quarterly` (trimestral-nativo): columnas intercaladas `1Q..4Q FY` por
-  año fiscal; el modelo se CONSTRUYE sobre trimestres y toda FY del tramo
-  trimestral es fórmula de agregación (flujos Σ4Q, stocks = 4Q) — C8
-  estructural. Histórico trimestral: `quarterly_history_years` (default 10);
-  antes, FY-solo. Assumptions por trimestre en todo el forecast (decisión
-  deliberada: la fatiga se paga una vez, el contexto beneficia cada run).
-  DCF sobre los FY agregados. S5 (una fórmula por fila) aplica POR TRAMO.
+- Histórico trimestral: `quarterly_history_years` (default 10); el largo plazo
+  pre-corte vive como FY observados en `Annual`. Assumptions por trimestre en
+  todo el forecast (la fatiga se paga una vez, el contexto beneficia cada
+  run). S5 (una fórmula por fila) aplica POR TRAMO.
 - Flujo top-to-bottom, left-to-right; periodos en columnas, líneas en filas.
 - Un archivo por modelo; cero links entre libros.
 - Cover con propósito, versión, autor, fecha, leyenda de colores y la celda

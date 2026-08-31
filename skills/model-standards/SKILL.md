@@ -39,16 +39,16 @@ Falta un contrato → detente y repórtalo; no construyas parcial ni inventes el
    obligatoria, nunca openpyxl crudo para estructura/formato) siguiendo
    `model-spec.md`: tabs en orden, formato 100% por código
    (`references/excel-practices.md` es el contrato legible).
-3. **UNA sola hoja `Model`** con secciones apiladas y outline (model-spec §Model):
-   Assumptions → IS → BS → CF → DCF → Ratios → Schedules. Schedules: un bloque
-   `Sch: <nombre>` por driver + cores (PPE, Debt, WC) — jamás hojas sueltas
-   (check S9). Periodicidad `annual_plus_quarterly`: columnas trimestrales
-   estimadas del año en curso y el siguiente antes de las anuales; el anual
-   corriente = suma de trimestres por fórmula (C8 estructural); assumptions
-   trimestrales en el tramo corto.
+3. Modo `quarterly` (model-spec §Operating/§Annual): **dos hojas** —
+   `Operating` (trimestral puro, secciones Assumptions → IS → BS → CF →
+   Ratios → Schedules; única zona de input) y `Annual` (agregados por fórmula
+   + sección DCF línea por línea; cero tecleo — C8/F14). Schedules: bloques
+   `Sch: <nombre>` + cores, jamás hojas sueltas (S9). Modo `annual`: una hoja
+   `Model` anual.
 4. Sección `Ratios` generada por `ModelStyler.build_ratios` con el registro
-   canon→fila del build (completitud = check F13; jamás a mano). Tab
-   `Quarterly` (si aplica): captura observada + LTM + actual-vs-estimado.
+   canon→fila del build, UNA llamada por hoja sobre el horizonte completo
+   (completitud Y unicidad = check F13; jamás a mano, jamás seccionada en
+   histórico/forecast).
 5. Pestañas de valuación según métodos activos — fórmulas y convenciones exactas en
    `references/valuation-conventions.md` (incluye bloque Hamada, reverse DCF y
    múltiplos justificados + PVGO). Usuario en el loop en cada supuesto.

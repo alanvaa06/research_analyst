@@ -9,18 +9,24 @@ valor. El plugin jamás decide un supuesto macro.
 
 ## Preflight (cualquier fallo DETIENE el comando)
 
-1. `workspace/macro/` existe con `macro-view.yaml` (si no: crear estructura desde
+1. `macro/` existe con `macro-view.yaml` (si no: crear estructura desde
    template y avisar — no hay nada que actualizar todavía).
-2. `macro/sources/` tiene al menos un documento legible — sin fuentes nuevas ni
-   instrucción explícita del analista, no hay base para proponer.
-3. **Snapshot primero:** copiar el yaml vigente a
+2. **Series frescas:** correr `python tools/fred_fetch.py --dest macro/series`
+   (gate: avisar antes). Sin key: pedirla en el chat (el registro es gratuito,
+   link en el mensaje del tool) y guardarla en `macro/fred.key` — jamás
+   imprimirla. Sin red: el tool da las opciones; continuar con las series ya
+   descargadas si existen.
+3. Insumos: `macro/series/` (observados FRED) y/o `macro/sources/` (research
+   del analista/terceros). Sin NINGUNO de los dos ni instrucción explícita,
+   no hay base para proponer.
+4. **Snapshot primero:** copiar el yaml vigente a
    `macro/history/macro-view_<YYYY-MM-DD>.yaml` ANTES de tocar nada.
 
 ## Pipeline
 
 | Paso | Qué hace |
 |---|---|
-| 1 | Lee `macro/sources/` completo. Regla de citado (coverage-tree §Fuentes de terceros): dato duro ⇒ `observado` con documento y página; opinión de tercero ⇒ atribuida, jamás supuesto sin gate |
+| 1 | Lee `macro/series/` (observados FRED: rf de la última obs de DGS10, FX de DEXMXUS, etc.) y `macro/sources/` completo. Regla de citado: serie ⇒ `observado` con serie y fecha de observación; dato duro de documento ⇒ `observado` con documento y página; opinión de tercero ⇒ atribuida, jamás supuesto sin gate |
 | 2 | **Propuesta campo por campo**: tabla valor vigente → valor propuesto → fuente exacta → etiqueta. Solo campos con evidencia en las fuentes; el resto no se toca |
 | 3 | **Gate POR CAMPO**: el analista confirma, corrige o rechaza cada propuesta. Sin confirmación, el campo queda como estaba |
 | 4 | Escribe el yaml con los campos confirmados + `updated_at` de hoy |

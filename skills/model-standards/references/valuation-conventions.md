@@ -19,7 +19,13 @@ El football field agrega SOLO métodos activos en `issuer-profile.yaml`.
 
 ## Convenciones por pestaña
 
-### Val_DCF (FCFF multi-stage)
+### Sección DCF de `Annual` (FCFF multi-stage) — antes tab Val_DCF
+
+Vive como sección de la hoja `Annual` (model-spec §Annual), LÍNEA POR LÍNEA
+según el bloque del spec: EBIT → impuestos → NOPAT → +D&A → −Capex → −ΔWC →
+FCFF (histórico Y forecast — el FCFF realizado es sanity visible) → factor de
+descuento → PV → terminales → EV → valor/acción → cruces → reverse DCF →
+Hamada. Cero fórmulas comprimidas. Convenciones de cada pieza:
 - FCFF derivado por fórmula desde el modelo (EBIT×(1−t) + D&A − CapEx − ΔWC), nunca
   re-tecleado.
 - WACC: componentes visibles — rf de `Macro` (macro-view), ERP de `Macro`, beta

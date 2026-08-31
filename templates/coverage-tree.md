@@ -17,6 +17,12 @@ subcarpeta intermedia (`workspace/`, `coberturas/`, etc.).
 ├── macro/                        # TODO lo macro — compartido; SOLO en la raiz
 │   ├── macro-view.yaml           # VIGENTE, nombre fijo (lo consume código);
 │   │                             #   dentro de un ticker es violación de contrato
+│   ├── fred.key                  # API key de FRED (gratuita; la guarda el agente
+│   │                             #   cuando el usuario la pega en el chat)
+│   ├── fred-series.txt           # opcional: IDs de serie extra (uno por línea)
+│   ├── series/                   # históricos macro observados (fred_fetch):
+│   │   ├── DGS10.csv             #   date,value por serie + manifest.csv con
+│   │   └── manifest.csv          #   título/unidades/última obs/fuente
 │   ├── sources/                  # research macro del analista y de terceros
 │   │                             #   (pdf/html/md — insumo de /update-macro)
 │   └── history/

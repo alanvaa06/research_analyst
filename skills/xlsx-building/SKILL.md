@@ -22,15 +22,20 @@ las best practices escritas y entregó Calibri con gridlines).
    ESTAMPA la periodicidad del perfil con `set_periodicity(model_periodicity)`
    — obligatorio: sin sello, F14 no puede vigilar las columnas trimestrales.
    Crea cada tab con `new_sheet` (gridlines off + freeze), `brand_bar`,
-   `label_col_width`. Header de periodos: modo `annual` → `period_header`
-   (años A/E); modo `quarterly` → `interleaved_header` (4 trimestres + FY por
-   año fiscal; devuelve el mapa (año,periodo)→columna para cablear FY = Σ4Q y
-   el populate). Toda columna FY del tramo trimestral es FÓRMULA de agregación
-   (C8); F14 exige ≥4 trimestres A y ≥4 E. Tabs y orden:
-   `templates/model-spec.md`.
-1b. **Agrupación TOTAL**: tras escribir cada sección de `Model`, `group_rows`
-   sobre TODO su contenido — sin excepciones. F7 audita por sección: una sola
-   sección sin outline = falla (bug del smoke 2026-08-31: agrupó unas y otras no).
+   `label_col_width`. Modo `quarterly` (spec §Operating/§Annual): DOS hojas —
+   `Operating` con header 100% trimestral (`quarter_header`, `1Q2016A …
+   4Q2031E`, sin columnas FY) y `Annual` con header de años (`period_header`
+   A/E) donde TODA celda es fórmula de agregación leyendo Operating (flujos
+   Σ4Q, stocks 4Q, ratios recalculados) o link a canonical_annual — cero
+   inputs (F14 lo audita). La sección DCF vive en `Annual`, línea por línea
+   según el bloque del model-spec — cero fórmulas comprimidas. Modo `annual`:
+   una hoja `Model` con `period_header`.
+1b. **Agrupación TOTAL**: tras escribir cada sección (en Operating Y Annual),
+   `group_rows` sobre TODO su contenido — sin excepciones. F7 audita por
+   sección: una sola sección sin outline = falla.
+1c. **Ratios una sola vez**: `build_ratios` se llama UNA vez por hoja sobre el
+   horizonte completo — histórico y forecast en la misma fila. Secciones
+   "Ratios histórico"/"Ratios forecast" separadas = F13 falla por duplicado.
 2. **Secciones**: el modelo vive en la hoja única `Model` — secciones
    Assumptions → IS → BS → CF → DCF → Ratios → Schedules con `section_header`
    (banda) y `group_rows` (colapsables). Schedules: un bloque por schedule con

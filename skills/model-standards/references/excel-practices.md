@@ -108,6 +108,11 @@ subtotales) → 14 bold sub-sección → 16 bold sección y título de hoja.
   saldo de apertura** (mata la circularidad sin switch de iteración).
 - IFERROR solo para errores esperados (múltiplo "na" en comps/precedents) y en
   la celda de check — nunca para tapar errores reales.
+- **Sin dato en una serie: JAMÁS texto** (`n/d`, `n/a`) en columnas de periodo
+  — envenena SUMPRODUCT y toda aritmética aguas abajo (#VALUE!). El hueco es
+  decisión del ANALISTA con gate: 0 explícito con comentario de celda,
+  carry-forward del último dato disponible (fórmula `=<celda previa>`, marcada
+  supuesto), o exclusión documentada de la fila. Check F15(b) lo audita.
 - Sin volátiles (OFFSET, INDIRECT, NOW, TODAY — check S3). INDEX/MATCH sobre
   VLOOKUP. Anclas `$` deliberadas (data tables).
 

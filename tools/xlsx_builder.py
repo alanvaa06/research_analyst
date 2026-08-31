@@ -579,24 +579,38 @@ def _is_header_row(ws: Worksheet, r: int) -> bool:
 
 
 def _gap_violations(ws: Worksheet) -> list[str]:
-    """F15: fila con contenido en >= mitad de las columnas de periodo pero con
-    HUECOS = serie rota (la fila NOPAT vacía en forecast del smoke #4, que
-    convirtió el FCFF proyectado en chatarra). Bloques de valor único (una
-    columna) no disparan; texto 'n/a' cuenta como contenido deliberado."""
+    """F15: dos venenos de serie.
+
+    (a) HUECOS: fila con contenido en >= mitad de las columnas de periodo pero
+        con celdas vacias = formula faltante en un tramo (la NOPAT vacia del
+        smoke #4 que convirtio el FCFF en chatarra).
+    (b) TEXTO LITERAL ('n/d', 'n/a'...) en columnas de periodo de una fila de
+        serie: rompe la cadena de calculo (#VALUE! aguas abajo). El hueco de
+        dato es DECISION del analista con gate — 0 explicito con comentario,
+        carry-forward del ultimo disponible (formula marcada supuesto), o
+        exclusion documentada — jamas texto. Formulas (empiezan con '=') no
+        cuentan como texto.
+    Bloques de valor unico (una columna) no disparan."""
     ca, ce = _period_columns(ws)
     pcols = sorted(set(ca + ce))
     if len(pcols) < 4:
         return []
     hits: list[str] = []
-    for r in range(1, min(ws.max_row, _MAX_SCAN_ROWS) + 1):
+    for r in range(6, min(ws.max_row, _MAX_SCAN_ROWS) + 1):
         if _is_header_row(ws, r):
             continue
         vals = [ws.cell(row=r, column=c).value for c in pcols]
         filled = sum(1 for v in vals if v is not None)
+        label = ws.cell(row=r, column=2).value or ws.cell(row=r, column=1).value
         if filled >= max(4, len(pcols) // 2) and filled < len(pcols):
-            label = ws.cell(row=r, column=2).value or ws.cell(row=r, column=1).value
             hits.append(f"{ws.title}!fila {r} ({str(label)[:25]}): "
                         f"{len(pcols) - filled} huecos")
+        text_cells = sum(1 for v in vals
+                         if isinstance(v, str) and not v.startswith("=")
+                         and not _QUARTER_HDR.fullmatch(v.strip()))
+        if filled >= 4 and text_cells > 0:
+            hits.append(f"{ws.title}!fila {r} ({str(label)[:25]}): "
+                        f"{text_cells} celdas de TEXTO en serie (rompe calculo)")
     return hits
 
 

@@ -67,6 +67,10 @@ Una fila sin ancla es una opinión con formato de tabla — rechazarla en el gat
    (crecimiento %, margen, días) vive en LA MISMA fila que el forecast (check
    F11) — al poblar, el analista ve su serie realizada al lado de lo que teclea.
 2. Flag de líneas sin driver que sigan forecasteadas "por inercia".
+2b. **Huecos de dato en series** (histórico no disponible para un driver):
+   PREGUNTAR al analista — ¿0 explícito, carry-forward del último disponible,
+   o excluir la fila? Jamás rellenar con texto (`n/d` rompe el cálculo, F15b)
+   ni decidir en silencio; la elección queda en comentario de celda.
 3. Contraste vs guidance: donde el supuesto del analista difiere del guidance,
    registrar la diferencia y el porqué en `journal/decisions.md` (es información de
    tesis, no un error). El guidance citable incluye lo extraído de

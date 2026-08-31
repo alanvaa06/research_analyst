@@ -29,12 +29,15 @@ life_cycle_stage: ""          # embryonic | growth | mature | decline
                               # (determina horizonte de forecast y peso de métodos)
 
 # --- Periodicidad del modelo (PREGUNTA OBLIGATORIA en init-coverage; jamás asumir)
-# annual                 -> modelo anual puro
-# annual_plus_quarterly  -> modelo anual + tab Quarterly (captura trimestral
-#                           observada, LTM, calibración de /update-quarter) —
-#                           propuesta default cuando hay trimestrales archivados
-# quarterly              -> forecast trimestral completo (emisoras muy estacionales)
-model_periodicity: ""         # annual | annual_plus_quarterly | quarterly
+# annual    -> modelo anual puro
+# quarterly -> modelo TRIMESTRAL-NATIVO: se construye sobre trimestres
+#              (histórico últimos quarterly_history_years + forecast trimestral
+#              completo, assumptions por trimestre); lo anual es agregado por
+#              fórmula (FY = suma/EOP de sus 4 trimestres), jamás input.
+#              Propuesta default cuando hay trimestrales archivados.
+# (annual_plus_quarterly: DEPRECADO — se trata como quarterly)
+model_periodicity: ""         # annual | quarterly
+quarterly_history_years: 10   # años de historia trimestral en el Model; antes: FY-solo
 periodicity_confirmed_by_user: false
 
 # --- Valuación: activación de métodos (deriva de issuer_type + life_cycle) --

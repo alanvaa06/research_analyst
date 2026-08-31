@@ -18,10 +18,13 @@ freeze y outline salen del módulo. `/model-check` audita esto con los checks F
   274 filas colapsable). Tabs aparte solo para granularidad o estructura
   distinta: Quarterly, Rev_Reconcile, Val_Comps, Sensitivity, Summary.
 - Menos tabs, mejor. El conteo de tabs es fijo (model-spec); crecen secciones.
-- Periodicidad mixta (`annual_plus_quarterly`): trimestres estimados del año en
-  curso y el siguiente ANTES de los años anuales; el anual corriente = suma de
-  sus trimestres por fórmula (C8 estructural); assumptions trimestrales en el
-  tramo corto. S5 (una fórmula por fila) aplica POR TRAMO de granularidad.
+- Modo `quarterly` (trimestral-nativo): columnas intercaladas `1Q..4Q FY` por
+  año fiscal; el modelo se CONSTRUYE sobre trimestres y toda FY del tramo
+  trimestral es fórmula de agregación (flujos Σ4Q, stocks = 4Q) — C8
+  estructural. Histórico trimestral: `quarterly_history_years` (default 10);
+  antes, FY-solo. Assumptions por trimestre en todo el forecast (decisión
+  deliberada: la fatiga se paga una vez, el contexto beneficia cada run).
+  DCF sobre los FY agregados. S5 (una fórmula por fila) aplica POR TRAMO.
 - Flujo top-to-bottom, left-to-right; periodos en columnas, líneas en filas.
 - Un archivo por modelo; cero links entre libros.
 - Cover con propósito, versión, autor, fecha, leyenda de colores y la celda

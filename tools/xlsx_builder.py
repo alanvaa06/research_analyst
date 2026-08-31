@@ -331,8 +331,7 @@ class ModelStyler:
 
     def quarter_header(self, ws: Worksheet, row: int, first_col: int,
                        quarters: list[str]) -> int:
-        """Mixed-granularity header, short-term quarters ('1Q2026E') before the
-        annual A/E years. Returns the next free column."""
+        """Quarter labels ('1Q2026E' / '3Q2025A'). Returns the next free column."""
         col = first_col
         for label in quarters:
             cell = ws.cell(row=row, column=col, value=label)
@@ -340,6 +339,39 @@ class ModelStyler:
             cell.alignment = Alignment(horizontal="center")
             col += 1
         return col
+
+    def interleaved_header(self, ws: Worksheet, row: int, first_col: int,
+                           first_year: int, last_year: int,
+                           quarterly_from_year: int, last_actual_year: int,
+                           last_actual_quarter: int) -> dict[tuple[int, str], int]:
+        """Quarterly-native header: per fiscal year, 4 quarter columns then the
+        FY aggregate column; years before ``quarterly_from_year`` get FY only.
+
+        Returns {(year, '1Q'|'2Q'|'3Q'|'4Q'|'FY'): column} so the build wires
+        FY = aggregate-of-quarters formulas (C8 estructural) and populate knows
+        where each period lives.
+        """
+        colmap: dict[tuple[int, str], int] = {}
+        col = first_col
+        for year in range(first_year, last_year + 1):
+            if year >= quarterly_from_year:
+                for q in (1, 2, 3, 4):
+                    is_actual = (year < last_actual_year or
+                                 (year == last_actual_year and q <= last_actual_quarter))
+                    label = f"{q}Q{year}{'A' if is_actual else 'E'}"
+                    cell = ws.cell(row=row, column=col, value=label)
+                    cell.font = Font(name=FONT_NAME, size=11, bold=True)
+                    cell.alignment = Alignment(horizontal="center")
+                    colmap[(year, f"{q}Q")] = col
+                    col += 1
+            fy = ws.cell(row=row, column=col, value=year)
+            fy.number_format = (NumFmt.YEAR_A if year <= last_actual_year
+                                else NumFmt.YEAR_E).value
+            fy.font = Font(name=FONT_NAME, size=11, bold=True)
+            fy.alignment = Alignment(horizontal="center")
+            colmap[(year, "FY")] = col
+            col += 1
+        return colmap
 
     # -- Ratios section (deterministic; fixes the "lazy ratios" failure) -----
 
@@ -581,9 +613,35 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
         findings.append(Finding("F7 outline en Model/Schedules", False,
                                 "ni tab Model ni Schedules existen"))
     else:
-        grouped = sum(1 for d in host.row_dimensions.values() if d.outlineLevel)
-        findings.append(Finding("F7 outline en Model/Schedules", grouped > 0,
-                                f"{host.title}: {grouped} filas agrupadas"))
+        # Por SECCION (marcador 'x' en col A + bold en col B): cada seccion con
+        # contenido debe tener filas agrupadas — agrupar solo algunas secciones
+        # (el bug del smoke 2026-08-31) FALLA.
+        headers: list[int] = []
+        for r in range(1, min(host.max_row, _MAX_SCAN_ROWS) + 1):
+            a = host.cell(row=r, column=1).value
+            b = host.cell(row=r, column=2)
+            if (isinstance(a, str) and a.strip().lower() == "x"
+                    and b.font is not None and b.font.bold
+                    and (b.font.size or 0) >= 13):
+                headers.append(r)
+        ungrouped: list[str] = []
+        total_grouped = sum(1 for d in host.row_dimensions.values() if d.outlineLevel)
+        for i, hr in enumerate(headers):
+            end = headers[i + 1] - 1 if i + 1 < len(headers) else min(host.max_row, _MAX_SCAN_ROWS)
+            content = [r for r in range(hr + 1, end + 1)
+                       if any(host.cell(row=r, column=c).value is not None
+                              for c in range(2, min(host.max_column, 30) + 1))]
+            if not content:
+                continue
+            grouped = sum(1 for r in content
+                          if r in host.row_dimensions and host.row_dimensions[r].outlineLevel)
+            if grouped == 0:
+                label = host.cell(row=hr, column=2).value
+                ungrouped.append(f"fila {hr} ({str(label)[:25]})")
+        ok = total_grouped > 0 and not ungrouped
+        detail = (f"{host.title}: {total_grouped} filas agrupadas"
+                  + (f"; secciones SIN outline: {', '.join(ungrouped[:5])}" if ungrouped else ""))
+        findings.append(Finding("F7 outline por seccion", ok, detail))
     # F8 no junk sheets, no Sch_* sheets
     junk = [n for n in wb.sheetnames if n in JUNK_SHEET_NAMES or n.startswith("Sch_")]
     findings.append(Finding("F8 sin hojas basura/Sch_*", not junk,
@@ -638,22 +696,27 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
     import re as _re
     m = _re.search(r"periodicity=([a-z_]+)", kw)
     if m and m.group(1) in ("annual_plus_quarterly", "quarterly"):
-        qcols = 0
+        q_actual = q_est = 0
         for ws in visible:
-            if ws.title not in ("Model", "Quarterly"):
+            if ws.title != "Model":
                 continue
             for row in ws.iter_rows(min_row=1, max_row=8,
-                                    max_col=min(ws.max_column, 60)):
+                                    max_col=min(ws.max_column, 150)):
                 for c in row:
-                    if isinstance(c.value, str) and _re.fullmatch(
-                            r"[1-4]Q20\d\dE", c.value.strip()):
-                        qcols += 1
-        findings.append(Finding("F14 columnas trimestrales estimadas",
-                                qcols >= 4,
-                                f"{qcols} columnas #QyyE (perfil: {m.group(1)}; "
-                                "minimo 4)"))
+                    if isinstance(c.value, str):
+                        v = c.value.strip()
+                        if _re.fullmatch(r"[1-4]Q20\d\dA", v):
+                            q_actual += 1
+                        elif _re.fullmatch(r"[1-4]Q20\d\dE", v):
+                            q_est += 1
+        ok = q_actual >= 4 and q_est >= 4
+        findings.append(Finding(
+            "F14 modelo trimestral-nativo",
+            ok,
+            f"{q_actual} trimestres A, {q_est} trimestres E en header de Model "
+            "(minimo 4 y 4: historico y forecast se construyen sobre trimestres)"))
     else:
-        findings.append(Finding("F14 columnas trimestrales estimadas", True,
+        findings.append(Finding("F14 modelo trimestral-nativo", True,
                                 "n/a (sin sello de periodicidad trimestral)"))
     return findings
 

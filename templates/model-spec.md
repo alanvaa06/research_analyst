@@ -45,14 +45,29 @@ nivel 1), colapsables a vista ejecutiva:
 
 ## Periodicidad (`model_periodicity` del perfil)
 
-- `annual`: columnas anuales FY.
-- `annual_plus_quarterly`: **columnas mixtas en `Model`** — trimestres ESTIMADOS
-  del año fiscal en curso y el siguiente (hasta 8 columnas `#Q20yyE`) antes de
-  los años anuales; los assumptions del tramo corto son TRIMESTRALES; el anual
-  del año en curso = SUMA de sus trimestres (check C8 estructural, no
-  verificación a posteriori). La tab `Quarterly` mantiene la captura observada
-  y la calibración. Años posteriores: anuales.
-- `quarterly`: forecast trimestral completo (emisoras muy estacionales).
+- `annual`: columnas anuales FY puras.
+- `quarterly` — **modelo trimestral-nativo** (decisión de diseño 2026-08-31;
+  `annual_plus_quarterly` queda DEPRECADO y se trata como `quarterly`):
+  el modelo se CONSTRUYE sobre trimestres; lo anual es un AGREGADO calculado,
+  nunca una serie paralela.
+  - **Columnas intercaladas** por año fiscal: `1Q25A 2Q25A 3Q25A 4Q25A FY25A |
+    1Q26E … FY26E …`. La columna FY es FÓRMULA por línea: flujos = Σ4Q;
+    stocks (balance) = valor del 4Q; ratios/márgenes = recalculados sobre el
+    agregado. FY jamás es input (check C8 estructural + F14).
+  - **Histórico trimestral: últimos `quarterly_history_years` años** (perfil,
+    default 10); antes del corte, solo columnas FY observadas (XBRL trimestral
+    confiable ~2010+; el largo plazo anual queda para tendencias).
+  - **Assumptions POR TRIMESTRE en todo el horizonte de forecast** — decisión
+    deliberada del analista dueño del plugin: la fatiga de captura se paga UNA
+    vez al iniciar cobertura y compra contexto purista que beneficia todos los
+    runs futuros (calibración trimestre a trimestre, guidance mapeado 1:1).
+    La entrevista de populate va trimestre por trimestre.
+  - **DCF sobre los FY agregados** (sección DCF anual): el valor terminal
+    domina y el descuento trimestral no paga su complejidad; los trimestres
+    aportan la precisión del agregado, no el descuento.
+  - La tab `Quarterly` desaparece en este modo — la captura trimestral
+    observada VIVE en las columnas del Model; `model/inputs/` sigue siendo la
+    fuente (C9).
 
 ## Reglas transversales
 

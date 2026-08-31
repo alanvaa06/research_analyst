@@ -32,7 +32,7 @@ implementación única, cero interpretación del agente.
 | C5 | Interés consistente con schedule de deuda | IS vs bloque `Sch: Debt` (documentar switch si hay circularidad) |
 | C6 | Identidad DuPont | ROE directo (NI/capital prom.) − ROE DuPont 5 factores = 0, todos los periodos (tab Ratios) |
 | C7 | CCC del forecast consistente con schedule de WC | Ratios (forecast) vs días DIO/DSO/DPO del bloque `Sch: WC` |
-| C8 | Cross-foot trimestral (solo `annual_plus_quarterly`) | Dos capas: (i) ESTRUCTURAL — en `Model`, el anual del año en curso es POR FÓRMULA la suma de sus columnas trimestrales estimadas; (ii) en `Quarterly`, suma de 4 trimestres observados = anual observado (YTD en años incompletos) |
+| C8 | Agregado anual estructural (modo `quarterly`) | Toda columna FY dentro del tramo trimestral es FÓRMULA de sus 4 trimestres (flujos = Σ4Q; stocks = 4Q; ratios recalculados) — jamás input ni serie paralela. Una FY tecleada = falla |
 | C9 | Histórico del xlsx = capa de captura | Escaneo por código: celdas históricas de IS/BS/CF coinciden con `model/inputs/canonical_annual.csv` (y `canonical_quarterly.csv` si aplica), tolerancia de redondeo; discrepancia = falla de captura o edición manual del histórico |
 
 ## De contenido (doctrina del plugin)
@@ -65,14 +65,14 @@ externo se audita igual.
 | F4 | Paleta de fills | Whitelist: navy `FF132E57`, naranja `FFED942D`, teal `FF1E8496`, amarillo input `FFFFF2CC`, gris escenario. Con `brand/DESIGN.md` presente, sus 3 slots se suman a la whitelist (pasar el archivo al audit) |
 | F5 | Formatos numéricos | Whitelist literal (miles con paréntesis y guion-cero, %, 0.0x, USD, fecha, A/E, `;;;`) |
 | F6 | Freeze panes | Presente en hojas de datos (Assumptions/IS/BS/CF/Ratios/Schedules/Rev_Reconcile/Val_*) |
-| F7 | Outline en Model/Schedules | La hoja `Model` (o `Schedules` legacy) tiene filas agrupadas — secciones colapsables |
+| F7 | Outline POR SECCIÓN | En `Model`: CADA sección con contenido (marcador `x` + header bold) tiene filas agrupadas — agrupar solo algunas secciones (bug del smoke 2026-08-31) FALLA |
 | F8 | Sin hojas basura | Ninguna `Sch_*`, `Hoja1`, `Sheet1` (refuerza S9) |
 | F9 | Headers de periodo A/E | Formatos `0"A"` / `0"E"` presentes en la fila de años |
 | F10 | Sello del builder | Custom property `research_analyst_builder` presente — el modelo se construyó vía `tools/xlsx_builder.py`. En modelo externo: `[aviso]`, no falla |
 | F11 | **Continuidad de series** | Una serie = UNA fila continua en todo el horizonte: histórico calculado/observado y forecast en la misma fila (el rol cambia por columna), jamás columnas históricas vacías. Detección: toda fila con ≥3 celdas de input (fill amarillo) en columnas de periodo debe tener TODAS las columnas de periodo pobladas. Requiere headers A/E (F9) para ubicar las columnas — F9 rojo deja F11 sin efecto |
 | F12 | **Sin series partidas** | Fila cuyo label contiene "forecast" con la mitad histórica (columnas A) vacía, o "histórico" con la mitad estimada (columnas E) vacía = la serie se partió en dos filas. Complementa F11 (que solo vigila filas de input); cacha el patrón exacto del smoke AAPL. Derivables hacia atrás (índices, ratios implícitos) se POBLAN por fórmula |
 | F13 | **Completitud de Ratios** | La sección Ratios contiene el set completo de razones del spec (`REQUIRED_RATIO_LABELS` en el código, ~25: DuPont 3/5 con cargas, NOPAT/ROIC/economic profit, márgenes, liquidez, solvencia, DSO/DIO/DPO/CCC, DFL, CFO/NI, accruals). `build_ratios` del builder las escribe por construcción; una Ratios armada a mano incompleta FALLA |
-| F14 | **Columnas trimestrales estimadas** | Si el sello del libro dice `periodicity=annual_plus_quarterly\|quarterly` (el builder lo estampa con `set_periodicity` desde el perfil — obligatorio en el scaffold), el header de `Model` debe traer ≥4 columnas `#Q20yyE`. Sin sello: n/a (modelo externo). Cacha el contrato 1a omitido |
+| F14 | **Modelo trimestral-nativo** | Con sello `periodicity=quarterly` (el builder lo estampa desde el perfil — obligatorio), el header de `Model` trae ≥4 trimestres `A` (histórico) Y ≥4 trimestres `E` (forecast) — el modelo se CONSTRUYE sobre trimestres, no solo los presenta. Sin sello: n/a |
 
 ## Reporte de /model-check
 

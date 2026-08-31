@@ -143,6 +143,8 @@ lectura expandida respira.
 - **Formato por código**: el libro se construye vía `tools/xlsx_builder.py`
   (skill xlsx-building); los checks F auditan paleta, fuentes, formatos,
   gridlines, freeze, outline, series y completitud de Ratios.
+- **FORECAST COMPLETO (F17, no negociable)**: toda fila con histórico lleva el
+  tramo forecast entero con fórmula — una celda E vacía es falla automática.
 - **Una serie = una fila** (checks F11 y F12): histórico calculado/observado y
   forecast en la misma fila, rol por columna; nunca filas "histórico" y
   "forecast" separadas; valores derivables hacia atrás (índices, ratios

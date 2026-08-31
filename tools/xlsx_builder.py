@@ -809,6 +809,34 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
     findings.append(Finding("F16 respiro antes de headers", not breath_hits,
                             "; ".join(breath_hits[:6]) or
                             "headers con fila en blanco previa"))
+    # F17 FORECAST COMPLETO (mandato duro): toda fila con historico (>=3
+    # celdas en columnas A) debe tener el tramo E COMPLETO — cero vacios.
+    # "Los forecast deben tener todas las formulas completas" (Alan).
+    fc_hits: list[str] = []
+    for ws in visible:
+        if ws.title not in ("Operating", "Annual", "Model", "Schedules", "IS",
+                            "BS", "CF", "Ratios"):
+            continue
+        ca_, ce_ = _period_columns(ws)
+        if len(ca_) < 2 or len(ce_) < 2:
+            continue
+        for r in range(6, min(ws.max_row, _MAX_SCAN_ROWS) + 1):
+            if _is_header_row(ws, r):
+                continue
+            a_filled = sum(1 for c in ca_
+                           if ws.cell(row=r, column=c).value is not None)
+            if a_filled < 3:
+                continue
+            e_empty = sum(1 for c in ce_
+                          if ws.cell(row=r, column=c).value is None)
+            if e_empty > 0:
+                label = (ws.cell(row=r, column=2).value
+                         or ws.cell(row=r, column=1).value)
+                fc_hits.append(f"{ws.title}!fila {r} ({str(label)[:25]}): "
+                               f"{e_empty}/{len(ce_)} E vacias")
+    findings.append(Finding("F17 forecast completo", not fc_hits,
+                            "; ".join(fc_hits[:8]) or
+                            "todo el tramo forecast con formula"))
     # F13 completitud + UNICIDAD de Ratios: el set completo presente, y cada
     # razon UNA sola vez por hoja — un label duplicado delata secciones
     # "Ratios historico" / "Ratios forecast" partidas (bug del smoke #3);

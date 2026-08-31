@@ -997,7 +997,11 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
                 continue
             a_filled = sum(1 for c in ca_
                            if ws.cell(row=r, column=c).value is not None)
-            if a_filled < 3:
+            # Serie TEMPORAL = poblada en al menos la mitad del historico.
+            # Un bloque de valor unico horizontal (beta levered / D/E / beta
+            # unlevered de cada comp en el bloque Hamada) ocupa 2-3 columnas
+            # y NO es una serie: exigirle forecast seria absurdo.
+            if a_filled < max(3, (len(ca_) + 1) // 2):
                 continue
             e_empty = sum(1 for c in ce_
                           if ws.cell(row=r, column=c).value is None)

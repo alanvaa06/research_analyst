@@ -139,9 +139,9 @@ El analista puede fijar los colores decorativos del xlsx. Formato determinista
 (línea `slot: #RRGGBB`; lo parsea `tools/xlsx_builder.py::load_brand`):
 
 ```
-brand_primary: #132E57    # barra de marca / cover (default navy CFI)
-brand_section: #ED942D    # headers de sección (default naranja CFI)
-brand_accent:  #1E8496    # acentos / tab color (default teal CFI)
+brand_primary: #1F4E79    # barra de marca / cover (default: azul oscuro)
+brand_section: #1F4E79    # bandas de sección, texto blanco (default: azul oscuro)
+brand_accent:  #BDD7EE    # sub-secciones / acento (default: azul claro)
 ```
 
 Solo esos 3 slots son rebrandeables. Los colores SEMÁNTICOS no se tocan jamás:

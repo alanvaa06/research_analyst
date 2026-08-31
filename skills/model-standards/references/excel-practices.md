@@ -49,9 +49,10 @@ freeze y outline salen del módulo. `/model-check` audita esto con los checks F
 
 | Uso | Valor |
 |---|---|
-| Barra de marca / cover | Navy `FF132E57`, texto blanco |
-| Header de sección | Naranja `FFED942D` |
-| Acentos / tab color dashboard | Teal `FF1E8496` |
+| Barra de marca / cover | Azul oscuro `FF1F4E79`, texto blanco |
+| Header de sección | Azul oscuro `FF1F4E79`, texto BLANCO bold 16 |
+| Sub-sección | Azul claro `FFBDD7EE`, texto negro bold 14 |
+| Acentos / tab color | Azul claro `FFBDD7EE` |
 | Input del analista | Fuente azul `FF0000FF` + fill amarillo claro `FFFFF2CC` |
 | Observado (histórico citado) | Fuente azul `FF0000FF`, sin fill, comentario con fuente |
 | Fórmula | Fuente negra |
@@ -59,8 +60,11 @@ freeze y outline salen del módulo. `/model-check` audita esto con los checks F
 | Error/warn | Fuente roja `FFFF0000` |
 | Área de escenario | Fill gris `FFF2F2F2` |
 
-Fuente única: **Arial Narrow** (11 normal; 11 bold subtotales; 12 bold
-sub-sección; 14 bold sección; 16 bold título de hoja).
+(La paleta CFI navy/naranja/teal queda como referencia histórica, FUERA de la
+whitelist F4.)
+
+Fuente única: **Aptos Narrow** — jerarquía por tamaño: 11 normal (y 11 bold
+subtotales) → 14 bold sub-sección → 16 bold sección y título de hoja.
 
 ## Formatos numéricos (whitelist literal — check F5)
 

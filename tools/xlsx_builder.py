@@ -34,15 +34,19 @@ from openpyxl.worksheet.worksheet import Worksheet
 BUILDER_STAMP_KEY = "research_analyst_builder"
 BUILDER_STAMP_VALUE = "xlsx_builder v1"
 
-FONT_NAME = "Arial Narrow"
+FONT_NAME = "Aptos Narrow"
 
 
 class Color(str, Enum):
-    """Palette (ARGB). Empirical CFI values."""
+    """Palette (ARGB). Identidad propia del plugin (2026-08-31): azul oscuro +
+    azul claro. Los valores CFI legacy se conservan como referencia historica
+    pero YA NO estan en la whitelist."""
 
-    NAVY = "FF132E57"        # brand bar, cover blocks
-    ORANGE = "FFED942D"      # section headers
-    TEAL = "FF1E8496"        # accents / dashboard tab color
+    DARK_BLUE = "FF1F4E79"   # barra de marca + bandas de seccion (texto blanco)
+    LIGHT_BLUE = "FFBDD7EE"  # sub-secciones + acento / tab color
+    NAVY = "FF132E57"        # legacy CFI (fuera de whitelist)
+    ORANGE = "FFED942D"      # legacy CFI (fuera de whitelist)
+    TEAL = "FF1E8496"        # legacy CFI (fuera de whitelist)
     INPUT_BLUE = "FF0000FF"  # analyst input font
     LINK_GREEN = "FF00CC00"  # cross-sheet link font
     WARN_RED = "FFFF0000"    # error font
@@ -162,9 +166,9 @@ class ModelStyler:
         self.wb: Workbook = Workbook()
         self.units_label = units_label
         b = brand or {}
-        self.color_primary: str = b.get("brand_primary", Color.NAVY.value)
-        self.color_section: str = b.get("brand_section", Color.ORANGE.value)
-        self.color_accent: str = b.get("brand_accent", Color.TEAL.value)
+        self.color_primary: str = b.get("brand_primary", Color.DARK_BLUE.value)
+        self.color_section: str = b.get("brand_section", Color.DARK_BLUE.value)
+        self.color_accent: str = b.get("brand_accent", Color.LIGHT_BLUE.value)
         default = self.wb.active
         if default is not None:
             self.wb.remove(default)
@@ -245,26 +249,33 @@ class ModelStyler:
 
     # -- row/cell level -----------------------------------------------------
 
-    def _nav_mark(self, ws: Worksheet, row: int) -> None:
-        """CFI navigation pattern: column A carries ONLY an 'x' on each header/
+    def _nav_mark(self, ws: Worksheet, row: int,
+                  color: str = Color.BLACK.value) -> None:
+        """Navigation pattern: column A carries ONLY an 'x' on each header/
         sub-header row, so Ctrl+arrow on column A jumps section to section.
         Labels live in column B."""
         c = ws.cell(row=row, column=1, value="x")
-        c.font = Font(name=FONT_NAME, size=8)
+        c.font = Font(name=FONT_NAME, size=8, color=color)
 
     def section_header(self, ws: Worksheet, row: int, title: str,
                        last_col: int = 18) -> None:
-        """Section band (default orange), bold 14 — one per model section."""
+        """Banda azul oscuro, texto BLANCO bold 16 — una por seccion."""
         for col in range(1, last_col + 1):
             ws.cell(row=row, column=col).fill = PatternFill(
                 "solid", fgColor=self.color_section)
         c = ws.cell(row=row, column=2, value=title)
-        c.font = Font(name=FONT_NAME, size=14, bold=True)
-        self._nav_mark(ws, row)
+        c.font = Font(name=FONT_NAME, size=16, bold=True,
+                      color=Color.WHITE.value)
+        self._nav_mark(ws, row, color=Color.WHITE.value)
 
-    def subsection(self, ws: Worksheet, row: int, title: str) -> None:
+    def subsection(self, ws: Worksheet, row: int, title: str,
+                   last_col: int = 18) -> None:
+        """Banda azul claro, texto negro bold 14 — sub-jerarquia."""
+        for col in range(1, last_col + 1):
+            ws.cell(row=row, column=col).fill = PatternFill(
+                "solid", fgColor=self.color_accent)
         c = ws.cell(row=row, column=2, value=title)
-        c.font = Font(name=FONT_NAME, size=12, bold=True)
+        c.font = Font(name=FONT_NAME, size=14, bold=True)
         self._nav_mark(ws, row)
 
     def schedule_block_header(self, ws: Worksheet, row: int, name: str) -> None:
@@ -482,7 +493,7 @@ _ALLOWED_FONT_COLORS = {c.value for c in (
     Color.INPUT_BLUE, Color.LINK_GREEN, Color.WARN_RED, Color.WHITE, Color.BLACK)}
 _ALLOWED_FONT_COLORS.add("FF333333")  # near-black tolerated
 _ALLOWED_FILLS = {c.value for c in (
-    Color.NAVY, Color.ORANGE, Color.TEAL, Color.INPUT_FILL, Color.SCENARIO_FILL)}
+    Color.DARK_BLUE, Color.LIGHT_BLUE, Color.INPUT_FILL, Color.SCENARIO_FILL)}
 _ALLOWED_NUMFMTS = {f.value for f in NumFmt}
 
 _MAX_SCAN_ROWS = 400

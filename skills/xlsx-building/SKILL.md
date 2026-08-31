@@ -28,8 +28,11 @@ las best practices escritas y entregó Calibri con gridlines).
    A/E) donde TODA celda es fórmula de agregación leyendo Operating (flujos
    Σ4Q, stocks 4Q, ratios recalculados) o link a canonical_annual — cero
    inputs (F14 lo audita). La sección DCF vive en `Annual`, línea por línea
-   según el bloque del model-spec — cero fórmulas comprimidas. Modo `annual`:
-   una hoja `Model` con `period_header`.
+   según el bloque del model-spec — cero fórmulas comprimidas; los bloques de
+   valor único (terminal/puente/cruces/reverse/Hamada) anclan sus VALORES en
+   la columna C, pegados a los labels — jamás al final del horizonte. Toda
+   fila de serie llena TODOS sus periodos (F15): un tramo sin fórmula = FCFF
+   chatarra en silencio. Modo `annual`: una hoja `Model` con `period_header`.
 1b. **Agrupación TOTAL**: tras escribir cada sección (en Operating Y Annual),
    `group_rows` sobre TODO su contenido — sin excepciones. F7 audita por
    sección: una sola sección sin outline = falla.

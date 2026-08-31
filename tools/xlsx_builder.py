@@ -538,6 +538,68 @@ def _scan_fonts_fills_formats(ws: Worksheet) -> tuple[set[str], set[str], set[st
     return font_names, font_colors, fills, numfmts
 
 
+import re as _re_mod
+
+_QUARTER_HDR = _re_mod.compile(r"[1-4]Q20\d\d([AE])")
+
+
+def _period_columns(ws: Worksheet) -> tuple[list[int], list[int]]:
+    """Columnas de periodo (histórico A, estimado E) del header de la hoja.
+
+    Reconoce AMBAS formas: años con numfmt 0"A"/0"E" y trimestres como TEXTO
+    ('1Q2026E') — sin esto, las hojas trimestrales (Operating) quedan
+    invisibles para los checks de series (el punto ciego del smoke #4).
+    """
+    cols_a: list[int] = []
+    cols_e: list[int] = []
+    for row in ws.iter_rows(min_row=1, max_row=8,
+                            max_col=min(ws.max_column, 200)):
+        for c in row:
+            if c.value is None:
+                continue
+            if c.number_format == NumFmt.YEAR_A.value:
+                cols_a.append(c.column)
+            elif c.number_format == NumFmt.YEAR_E.value:
+                cols_e.append(c.column)
+            elif isinstance(c.value, str):
+                m = _QUARTER_HDR.fullmatch(c.value.strip())
+                if m:
+                    (cols_a if m.group(1) == "A" else cols_e).append(c.column)
+        if len(cols_a) + len(cols_e) >= 4:
+            break
+    return cols_a, cols_e
+
+
+def _is_header_row(ws: Worksheet, r: int) -> bool:
+    for col in (1, 2):
+        f = ws.cell(row=r, column=col).font
+        if f is not None and f.bold and (f.size or 0) >= 13:
+            return True
+    return False
+
+
+def _gap_violations(ws: Worksheet) -> list[str]:
+    """F15: fila con contenido en >= mitad de las columnas de periodo pero con
+    HUECOS = serie rota (la fila NOPAT vacía en forecast del smoke #4, que
+    convirtió el FCFF proyectado en chatarra). Bloques de valor único (una
+    columna) no disparan; texto 'n/a' cuenta como contenido deliberado."""
+    ca, ce = _period_columns(ws)
+    pcols = sorted(set(ca + ce))
+    if len(pcols) < 4:
+        return []
+    hits: list[str] = []
+    for r in range(1, min(ws.max_row, _MAX_SCAN_ROWS) + 1):
+        if _is_header_row(ws, r):
+            continue
+        vals = [ws.cell(row=r, column=c).value for c in pcols]
+        filled = sum(1 for v in vals if v is not None)
+        if filled >= max(4, len(pcols) // 2) and filled < len(pcols):
+            label = ws.cell(row=r, column=2).value or ws.cell(row=r, column=1).value
+            hits.append(f"{ws.title}!fila {r} ({str(label)[:25]}): "
+                        f"{len(pcols) - filled} huecos")
+    return hits
+
+
 def _series_continuity_violations(ws: Worksheet) -> list[str]:
     """F11: rows that look like input series must span the WHOLE horizon.
 
@@ -546,21 +608,14 @@ def _series_continuity_violations(ws: Worksheet) -> list[str]:
     a series row with empty period cells means history/forecast got split or
     history was left unpopulated (the AAPL smoke-test failure pattern).
     """
-    period_cols: list[int] = []
-    header_row: Optional[int] = None
-    for row in ws.iter_rows(min_row=1, max_row=min(ws.max_row, 8),
-                            max_col=min(ws.max_column, _MAX_SCAN_COLS)):
-        cols = [c.column for c in row
-                if c.number_format in (NumFmt.YEAR_A.value, NumFmt.YEAR_E.value)
-                and c.value is not None]
-        if len(cols) >= 4:
-            period_cols = cols
-            header_row = row[0].row
-            break
-    if not period_cols or header_row is None:
+    ca, ce = _period_columns(ws)   # anios A/E numfmt Y trimestres de texto
+    period_cols = sorted(set(ca + ce))
+    if len(period_cols) < 4:
         return []
     violations: list[str] = []
-    for r in range(header_row + 1, min(ws.max_row, _MAX_SCAN_ROWS) + 1):
+    for r in range(1, min(ws.max_row, _MAX_SCAN_ROWS) + 1):
+        if _is_header_row(ws, r):
+            continue
         filled_inputs = 0
         empties = 0
         for col in period_cols:
@@ -697,6 +752,17 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
     findings.append(Finding("F12 sin series partidas", not split_hits,
                             "; ".join(split_hits[:8]) or
                             "ninguna fila hist/forecast partida"))
+    # F15 series sin huecos: fila con contenido en >= mitad de las columnas
+    # de periodo pero con celdas vacias = formula faltante en un tramo (la
+    # NOPAT vacia en forecast del smoke #4 — S5 hecho codigo).
+    gap_hits: list[str] = []
+    for ws in visible:
+        if ws.title in ("Operating", "Annual", "Model", "Schedules", "IS",
+                        "BS", "CF", "Ratios"):
+            gap_hits.extend(_gap_violations(ws))
+    findings.append(Finding("F15 series sin huecos", not gap_hits,
+                            "; ".join(gap_hits[:8]) or
+                            "sin huecos en filas de serie"))
     # F13 completitud + UNICIDAD de Ratios: el set completo presente, y cada
     # razon UNA sola vez por hoja — un label duplicado delata secciones
     # "Ratios historico" / "Ratios forecast" partidas (bug del smoke #3);
@@ -803,19 +869,7 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
 
 def _split_series_violations(ws: Worksheet) -> list[str]:
     """F12: label contiene 'forecast' u 'historico' y solo su mitad esta llena."""
-    period_cols_a: list[int] = []
-    period_cols_e: list[int] = []
-    for row in ws.iter_rows(min_row=1, max_row=min(ws.max_row, 8),
-                            max_col=min(ws.max_column, _MAX_SCAN_COLS)):
-        for c in row:
-            if c.value is None:
-                continue
-            if c.number_format == NumFmt.YEAR_A.value:
-                period_cols_a.append(c.column)
-            elif c.number_format == NumFmt.YEAR_E.value:
-                period_cols_e.append(c.column)
-        if period_cols_a and period_cols_e:
-            break
+    period_cols_a, period_cols_e = _period_columns(ws)
     if not period_cols_a or not period_cols_e:
         return []
     hits: list[str] = []

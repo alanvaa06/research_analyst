@@ -84,6 +84,11 @@ Reverse DCF: EV de mercado · TV implicita · g implicita de mercado (D4b)
 Bloque Hamada (beta pure-play, mecanica visible)
 ```
 
+**Layout de los bloques de valor único** (terminal, puente a equity, cruces,
+reverse DCF, Hamada): los VALORES se anclan en la **columna C** (pegados a los
+labels), jamás al final del horizonte de columnas — el lector no scrollea 16
+periodos para ver el valor por acción.
+
 ## Periodicidad (`model_periodicity` del perfil)
 
 - `annual`: columnas anuales FY puras.

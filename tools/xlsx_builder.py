@@ -94,9 +94,9 @@ _THIN = Side(style="thin")
 _DOUBLE = Side(style="double")
 
 # Sheets that must carry frozen panes (data grids). Cover/Checks/Summary exempt.
-FROZEN_SHEET_PREFIXES = ("Model", "Assumptions", "Macro", "IS", "BS", "CF",
-                         "Ratios", "Schedules", "Rev_Reconcile", "Val_",
-                         "Quarterly")
+FROZEN_SHEET_PREFIXES = ("Operating", "Annual", "Model", "Assumptions",
+                         "Macro", "IS", "BS", "CF", "Ratios", "Schedules",
+                         "Rev_Reconcile", "Val_", "Quarterly")
 
 # Ratios completeness contract (check F13): these labels must exist in the
 # Ratios section — build_ratios() writes exactly these, so builder output
@@ -609,38 +609,46 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
                             ", ".join(no_freeze) or "ok"))
     # F7 outline grouping: en la tab Model (secciones apiladas) o en Schedules
     host = next((ws for ws in visible if ws.title in ("Model", "Schedules")), None)
-    if host is None:
-        findings.append(Finding("F7 outline en Model/Schedules", False,
-                                "ni tab Model ni Schedules existen"))
+    hosts = [ws for ws in visible
+             if ws.title in ("Operating", "Annual", "Model", "Schedules")]
+    if not hosts:
+        findings.append(Finding("F7 outline por seccion", False,
+                                "sin hojas Operating/Annual/Model/Schedules"))
     else:
-        # Por SECCION (marcador 'x' en col A + bold en col B): cada seccion con
-        # contenido debe tener filas agrupadas — agrupar solo algunas secciones
-        # (el bug del smoke 2026-08-31) FALLA.
-        headers: list[int] = []
-        for r in range(1, min(host.max_row, _MAX_SCAN_ROWS) + 1):
-            a = host.cell(row=r, column=1).value
-            b = host.cell(row=r, column=2)
-            if (isinstance(a, str) and a.strip().lower() == "x"
-                    and b.font is not None and b.font.bold
-                    and (b.font.size or 0) >= 13):
-                headers.append(r)
+        # Por SECCION (marcador 'x' en col A + bold >=13 en col B): cada
+        # seccion con contenido debe tener filas agrupadas — agrupar solo
+        # algunas secciones (bug del smoke 2026-08-31) FALLA.
         ungrouped: list[str] = []
-        total_grouped = sum(1 for d in host.row_dimensions.values() if d.outlineLevel)
-        for i, hr in enumerate(headers):
-            end = headers[i + 1] - 1 if i + 1 < len(headers) else min(host.max_row, _MAX_SCAN_ROWS)
-            content = [r for r in range(hr + 1, end + 1)
-                       if any(host.cell(row=r, column=c).value is not None
-                              for c in range(2, min(host.max_column, 30) + 1))]
-            if not content:
-                continue
-            grouped = sum(1 for r in content
-                          if r in host.row_dimensions and host.row_dimensions[r].outlineLevel)
-            if grouped == 0:
-                label = host.cell(row=hr, column=2).value
-                ungrouped.append(f"fila {hr} ({str(label)[:25]})")
+        total_grouped = 0
+        for host in hosts:
+            total_grouped += sum(1 for d in host.row_dimensions.values()
+                                 if d.outlineLevel)
+            headers: list[int] = []
+            for r in range(1, min(host.max_row, _MAX_SCAN_ROWS) + 1):
+                a = host.cell(row=r, column=1).value
+                b = host.cell(row=r, column=2)
+                if (isinstance(a, str) and a.strip().lower() == "x"
+                        and b.font is not None and b.font.bold
+                        and (b.font.size or 0) >= 13):
+                    headers.append(r)
+            for i, hr in enumerate(headers):
+                end = (headers[i + 1] - 1 if i + 1 < len(headers)
+                       else min(host.max_row, _MAX_SCAN_ROWS))
+                content = [r for r in range(hr + 1, end + 1)
+                           if any(host.cell(row=r, column=c).value is not None
+                                  for c in range(2, min(host.max_column, 30) + 1))]
+                if not content:
+                    continue
+                grouped = sum(1 for r in content
+                              if r in host.row_dimensions
+                              and host.row_dimensions[r].outlineLevel)
+                if grouped == 0:
+                    label = host.cell(row=hr, column=2).value
+                    ungrouped.append(f"{host.title}!fila {hr} ({str(label)[:25]})")
         ok = total_grouped > 0 and not ungrouped
-        detail = (f"{host.title}: {total_grouped} filas agrupadas"
-                  + (f"; secciones SIN outline: {', '.join(ungrouped[:5])}" if ungrouped else ""))
+        detail = (f"{total_grouped} filas agrupadas"
+                  + (f"; secciones SIN outline: {', '.join(ungrouped[:5])}"
+                     if ungrouped else ""))
         findings.append(Finding("F7 outline por seccion", ok, detail))
     # F8 no junk sheets, no Sch_* sheets
     junk = [n for n in wb.sheetnames if n in JUNK_SHEET_NAMES or n.startswith("Sch_")]
@@ -671,10 +679,13 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
     findings.append(Finding("F12 sin series partidas", not split_hits,
                             "; ".join(split_hits[:8]) or
                             "ninguna fila hist/forecast partida"))
-    # F13 completitud de Ratios: la seccion Ratios contiene el set del spec
-    labels_found: set[str] = set()
+    # F13 completitud + UNICIDAD de Ratios: el set completo presente, y cada
+    # razon UNA sola vez por hoja — un label duplicado delata secciones
+    # "Ratios historico" / "Ratios forecast" partidas (bug del smoke #3);
+    # la serie completa vive en UNA fila.
+    counts: dict[tuple[str, str], int] = {}
     for ws in visible:
-        if ws.title not in ("Model", "Ratios"):
+        if ws.title not in ("Operating", "Annual", "Model", "Ratios"):
             continue
         for row in ws.iter_rows(min_col=1, max_col=2,
                                 max_row=min(ws.max_row, _MAX_SCAN_ROWS)):
@@ -683,25 +694,36 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
                 if isinstance(v, str):
                     for req in REQUIRED_RATIO_LABELS:
                         if req.lower() in v.lower():
-                            labels_found.add(req)
+                            key_ = (ws.title, req)
+                            counts[key_] = counts.get(key_, 0) + 1
+    labels_found = {label for (_, label) in counts}
     missing_ratios = [x for x in REQUIRED_RATIO_LABELS if x not in labels_found]
-    findings.append(Finding("F13 completitud de Ratios", not missing_ratios,
-                            ("faltan: " + ", ".join(missing_ratios[:8]) +
-                             (" ..." if len(missing_ratios) > 8 else ""))
-                            if missing_ratios else
-                            f"{len(REQUIRED_RATIO_LABELS)} razones presentes"))
+    dup_ratios = [f"{sheet}:{label}" for (sheet, label), n in counts.items()
+                  if n >= 2]
+    ok13 = not missing_ratios and not dup_ratios
+    if missing_ratios:
+        detail13 = ("faltan: " + ", ".join(missing_ratios[:8])
+                    + (" ..." if len(missing_ratios) > 8 else ""))
+    elif dup_ratios:
+        detail13 = ("secciones de Ratios PARTIDAS (label duplicado): "
+                    + ", ".join(dup_ratios[:5]))
+    else:
+        detail13 = f"{len(REQUIRED_RATIO_LABELS)} razones presentes, sin duplicados"
+    findings.append(Finding("F13 Ratios completa y unica", ok13, detail13))
     # F14 columnas trimestrales estimadas: si el sello dice periodicidad con
     # trimestres, el header debe traer columnas #Q20yyE (el contrato 1a que el
     # rebuild v3 se salto). Sin sello de periodicidad: n/a (modelo externo).
     import re as _re
     m = _re.search(r"periodicity=([a-z_]+)", kw)
     if m and m.group(1) in ("annual_plus_quarterly", "quarterly"):
+        # (i) Operating (o Model legacy): el modelo SE CONSTRUYE sobre
+        # trimestres — >=4 A y >=4 E en el header.
         q_actual = q_est = 0
         for ws in visible:
-            if ws.title != "Model":
+            if ws.title not in ("Operating", "Model"):
                 continue
             for row in ws.iter_rows(min_row=1, max_row=8,
-                                    max_col=min(ws.max_column, 150)):
+                                    max_col=min(ws.max_column, 200)):
                 for c in row:
                     if isinstance(c.value, str):
                         v = c.value.strip()
@@ -709,12 +731,36 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
                             q_actual += 1
                         elif _re.fullmatch(r"[1-4]Q20\d\dE", v):
                             q_est += 1
-        ok = q_actual >= 4 and q_est >= 4
+        problems: list[str] = []
+        if q_actual < 4 or q_est < 4:
+            problems.append(f"Operating: {q_actual} trimestres A / {q_est} E (min 4 y 4)")
+        # (ii) Annual: solo anios FY en header (cero '#Q') y CERO inputs —
+        # los agregados jamas se teclean (C8 estructural).
+        annual = next((ws for ws in visible if ws.title == "Annual"), None)
+        if annual is not None:
+            q_in_annual = 0
+            inputs_in_annual = 0
+            for row in annual.iter_rows(min_row=1, max_row=8,
+                                        max_col=min(annual.max_column, 60)):
+                for c in row:
+                    if isinstance(c.value, str) and _re.fullmatch(
+                            r"[1-4]Q20\d\d[AE]", c.value.strip()):
+                        q_in_annual += 1
+            for row in annual.iter_rows(max_row=min(annual.max_row, _MAX_SCAN_ROWS),
+                                        max_col=min(annual.max_column, 60)):
+                for c in row:
+                    if (c.fill is not None and c.fill.patternType == "solid"
+                            and getattr(c.fill.fgColor, "rgb", None)
+                            == Color.INPUT_FILL.value and c.value is not None):
+                        inputs_in_annual += 1
+            if q_in_annual:
+                problems.append(f"Annual: {q_in_annual} columnas #Q (debe ser FY-solo)")
+            if inputs_in_annual:
+                problems.append(f"Annual: {inputs_in_annual} celdas de INPUT (agregados no se teclean)")
         findings.append(Finding(
-            "F14 modelo trimestral-nativo",
-            ok,
-            f"{q_actual} trimestres A, {q_est} trimestres E en header de Model "
-            "(minimo 4 y 4: historico y forecast se construyen sobre trimestres)"))
+            "F14 modelo trimestral-nativo", not problems,
+            "; ".join(problems) if problems else
+            f"Operating: {q_actual} A / {q_est} E; Annual limpio"))
     else:
         findings.append(Finding("F14 modelo trimestral-nativo", True,
                                 "n/a (sin sello de periodicidad trimestral)"))

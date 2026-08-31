@@ -34,8 +34,15 @@ Fila de identidad: ROE directo (NI/capital prom.) − ROE DuPont 5 = 0 → check
 
     NOPAT = EBIT × (1 − t efectiva)         ← t efectiva por fórmula desde IS
     Capital invertido = deuda total + capital contable − caja y equivalentes
-    ROIC = NOPAT / capital invertido promedio
-    Economic profit = (ROIC − WACC) × capital invertido promedio
+    ROIC = NOPAT / capital invertido PROMEDIO      (promedio, como todo
+    Economic profit = (ROIC − WACC) × capital     denominador de balance)
+                      invertido promedio
+
+**Guarda obligatoria**: capital invertido promedio ≤ 0 (caja > deuda+capital —
+caso real en emisoras con caja neta enorme) ⇒ ROIC y economic profit reportan
+`n/s` (no significativo). Jamás un porcentaje inflado: el smoke #5 mostró
+ROIC de 369.6% con capital invertido de 34,838 — matemáticamente correcto,
+financieramente ruido.
 
 WACC referenciado de `Val_DCF` (link verde entre hojas). Lectura de tesis: spread
 ROIC−WACC positivo sostenido = evidencia numérica del moat que industry-analysis
@@ -52,10 +59,16 @@ afirma cualitativamente; la entrevista de cierre lo confronta.
 
 ## Bloque D — Ciclo de conversión de efectivo
 
-    DIO = inventario prom. / COGS × 365
-    DSO = CxC prom. / ventas × 365
-    DPO = CxP prom. / COGS × 365
+    DIO = inventario prom. / COGS × <días>
+    DSO = CxC prom. / ventas × <días>
+    DPO = CxP prom. / COGS × <días>
     CCC = DIO + DSO − DPO
+
+**Regla de ventana (crítica en modelo trimestral)**: numerador = STOCK
+promedio, denominador = FLUJO; ambos deben cubrir la MISMA ventana. En hojas
+trimestrales: o el flujo es UDM (12 meses) con `DAYS_YEAR`, o el flujo del
+trimestre con `DAYS_QUARTER`. Mezclar flujo trimestral con `DAYS_YEAR` infla
+los días ~4×. `build_ratios` recibe `days_ref` explícito — no lo hardcodea.
 
 Histórico: calculado. Forecast: referencia los días del bloque `Sch: WC` — el CCC
 forecast es output del schedule, no fila independiente (check C7).

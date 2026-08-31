@@ -23,7 +23,7 @@ from typing import Iterable, Optional
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-from openpyxl.utils import get_column_letter
+from openpyxl.utils import column_index_from_string, get_column_letter
 from openpyxl.workbook.properties import CalcProperties
 from openpyxl.worksheet.worksheet import Worksheet
 
@@ -358,6 +358,10 @@ class ModelStyler:
         """Quarterly-native header: per fiscal year, 4 quarter columns then the
         FY aggregate column; years before ``quarterly_from_year`` get FY only.
 
+        DEPRECATED (diseño 2026-08-31): el modo quarterly usa dos hojas
+        (Operating trimestral puro / Annual agregada). Se conserva para
+        modelos legacy.
+
         Returns {(year, '1Q'|'2Q'|'3Q'|'4Q'|'FY'): column} so the build wires
         FY = aggregate-of-quarters formulas (C8 estructural) and populate knows
         where each period lives.
@@ -388,8 +392,16 @@ class ModelStyler:
 
     def build_ratios(self, ws: Worksheet, start_row: int, first_col: int,
                      n_cols: int, ref: dict[str, str],
-                     wacc_ref: Optional[str] = None) -> tuple[int, list[str]]:
+                     wacc_ref: Optional[str] = None,
+                     days_ref: str = "DAYS_YEAR") -> tuple[int, list[str]]:
         """Write the FULL Ratios section (blocks A-G of ratios-analytics.md).
+
+        ``days_ref``: named range de dias para las razones de dias (DSO/DIO/
+        DPO/CCC). REGLA FINANCIERA: el numerador es un STOCK promedio y el
+        denominador un FLUJO — ambos deben cubrir la MISMA ventana. En hojas
+        trimestrales, o el flujo es UDM (12 meses) con ``DAYS_YEAR``, o es el
+        flujo del trimestre con ``DAYS_QUARTER``; mezclar flujo trimestral con
+        DAYS_YEAR infla los dias ~4x.
 
         ``ref`` maps canon line -> absolute row reference WITHOUT column, e.g.
         {"rev": "Model!{c}27", ...} where "{c}" is replaced per period column
@@ -456,12 +468,28 @@ class ModelStyler:
         header("ROIC y economic profit")
         row_out("Tasa efectiva (tax/EBT)", '=IF({ebt}=0,"",{tax}/{ebt})', NumFmt.PCT1, ("tax", "ebt"))
         row_out("NOPAT (EBIT x (1-t))", '=IF({ebt}=0,"",{ebit}*(1-{tax}/{ebt}))', NumFmt.NUM, ("ebit", "tax", "ebt"))
-        row_out("Capital invertido (deuda+capital-caja)", "={debt}+{equity}-{cash}", NumFmt.NUM, ("debt", "equity", "cash"))
-        row_out("ROIC", '=IF(({debt}+{equity}-{cash})=0,"",IF({ebt}=0,"",{ebit}*(1-{tax}/{ebt})/({debt}+{equity}-{cash})))', NumFmt.PCT1, ("debt", "equity", "cash", "ebit", "tax", "ebt"))
+        # Capital invertido PROMEDIO (consistente con el resto de ratios que
+        # usan denominadores de balance promediados — antes usaba el saldo de
+        # cierre, inconsistente con ratios-analytics.md).
+        _ic = ("(AVERAGE({debt_p},{debt})+AVERAGE({equity_p},{equity})"
+               "-AVERAGE({cash_p},{cash}))")
+        row_out("Capital invertido promedio (deuda+capital-caja)", "=" + _ic,
+                NumFmt.NUM, ("debt", "debt_p", "equity", "equity_p", "cash", "cash_p"))
+        # Guardas explicitas: capital invertido <= 0 (caja > deuda+capital,
+        # caso real en emisoras con caja neta enorme) hace el ROIC absurdo —
+        # se reporta "n/s" (no significativo), jamas un numero inflado.
+        row_out("ROIC",
+                '=IF(OR(' + _ic + '<=0,{ebt}=0),"n/s",{ebit}*(1-{tax}/{ebt})/' + _ic + ')',
+                NumFmt.PCT1,
+                ("debt", "debt_p", "equity", "equity_p", "cash", "cash_p",
+                 "ebit", "tax", "ebt"))
         if wacc_ref:
             row_out(f"Economic profit (spread vs WACC {wacc_ref})",
-                    '=IF({ebt}=0,"",({ebit}*(1-{tax}/{ebt})/MAX(1,{debt}+{equity}-{cash})-' + wacc_ref + ')*({debt}+{equity}-{cash}))',
-                    NumFmt.NUM, ("ebit", "tax", "ebt", "debt", "equity", "cash"))
+                    '=IF(OR(' + _ic + '<=0,{ebt}=0),"n/s",'
+                    '({ebit}*(1-{tax}/{ebt})/' + _ic + '-' + wacc_ref + ')*' + _ic + ')',
+                    NumFmt.NUM,
+                    ("ebit", "tax", "ebt", "debt", "debt_p", "equity",
+                     "equity_p", "cash", "cash_p"))
         else:
             skipped.append("Economic profit (sin wacc_ref)")
         r += 1
@@ -476,11 +504,13 @@ class ModelStyler:
         r += 1
 
         header("Ciclo de conversion de efectivo")
-        row_out("DSO (dias)", '=IF({rev}=0,"",AVERAGE({ar_p},{ar})/{rev}*DAYS_YEAR)', NumFmt.DEC2, ("ar", "ar_p", "rev"))
-        row_out("DIO (dias)", '=IF({cogs}=0,"",AVERAGE({inv_p},{inv})/{cogs}*DAYS_YEAR)', NumFmt.DEC2, ("inv", "inv_p", "cogs"))
-        row_out("DPO (dias)", '=IF({cogs}=0,"",AVERAGE({ap_p},{ap})/{cogs}*DAYS_YEAR)', NumFmt.DEC2, ("ap", "ap_p", "cogs"))
+        row_out("DSO (dias)", '=IF({rev}=0,"",AVERAGE({ar_p},{ar})/{rev}*' + days_ref + ')', NumFmt.DEC2, ("ar", "ar_p", "rev"))
+        row_out("DIO (dias)", '=IF({cogs}=0,"",AVERAGE({inv_p},{inv})/{cogs}*' + days_ref + ')', NumFmt.DEC2, ("inv", "inv_p", "cogs"))
+        row_out("DPO (dias)", '=IF({cogs}=0,"",AVERAGE({ap_p},{ap})/{cogs}*' + days_ref + ')', NumFmt.DEC2, ("ap", "ap_p", "cogs"))
         row_out("CCC (DSO+DIO-DPO)",
-                '=IF({cogs}=0,"",AVERAGE({ar_p},{ar})/{rev}*DAYS_YEAR+AVERAGE({inv_p},{inv})/{cogs}*DAYS_YEAR-AVERAGE({ap_p},{ap})/{cogs}*DAYS_YEAR)',
+                '=IF({cogs}=0,"",AVERAGE({ar_p},{ar})/{rev}*' + days_ref
+                + '+AVERAGE({inv_p},{inv})/{cogs}*' + days_ref
+                + '-AVERAGE({ap_p},{ap})/{cogs}*' + days_ref + ')',
                 NumFmt.DEC2, ("ar", "ar_p", "inv", "inv_p", "ap", "ap_p", "rev", "cogs"))
         r += 1
 
@@ -576,6 +606,127 @@ def _is_header_row(ws: Worksheet, r: int) -> bool:
         if f is not None and f.bold and (f.size or 0) >= 13:
             return True
     return False
+
+
+# --- Deteccion de referencias circulares (check S11, sin Excel) ------------
+
+_SHEET_REF = _re_mod.compile(
+    r"(?:'([^']+)'|([A-Za-z_][A-Za-z0-9_.]*))!"          # hoja opcional
+    r"\$?([A-Z]{1,3})\$?(\d+)"
+    r"(?::\$?([A-Z]{1,3})\$?(\d+))?"                      # rango opcional
+)
+_LOCAL_REF = _re_mod.compile(
+    r"(?<![A-Z0-9_!$:])\$?([A-Z]{1,3})\$?(\d+)"
+    r"(?::\$?([A-Z]{1,3})\$?(\d+))?"
+)
+_FN_NAME = _re_mod.compile(r"[A-Z][A-Z0-9_.]*\(")
+
+
+def _formula_deps(formula: str, sheet: str,
+                  known_sheets: set[str]) -> set[tuple[str, int, int]]:
+    """Celdas (hoja, fila, col) de las que depende una fórmula. Rangos se
+    expanden acotados (<= 400 celdas) para no explotar en SUM grandes."""
+    deps: set[tuple[str, int, int]] = set()
+    body = formula[1:] if formula.startswith("=") else formula
+    consumed: list[tuple[int, int]] = []
+    for m in _SHEET_REF.finditer(body):
+        tgt = (m.group(1) or m.group(2))
+        if tgt not in known_sheets:
+            continue
+        consumed.append((m.start(), m.end()))
+        c1 = column_index_from_string(m.group(3))
+        r1 = int(m.group(4))
+        if m.group(5):
+            c2 = column_index_from_string(m.group(5))
+            r2 = int(m.group(6))
+        else:
+            c2, r2 = c1, r1
+        if (abs(c2 - c1) + 1) * (abs(r2 - r1) + 1) > 400:
+            continue
+        for rr in range(min(r1, r2), max(r1, r2) + 1):
+            for cc in range(min(c1, c2), max(c1, c2) + 1):
+                deps.add((tgt, rr, cc))
+    masked = list(body)
+    for s, e in consumed:
+        for i in range(s, e):
+            masked[i] = " "
+    rest = "".join(masked)
+    rest = _FN_NAME.sub(lambda m: " " * (m.end() - m.start()), rest)
+    for m in _LOCAL_REF.finditer(rest):
+        c1 = column_index_from_string(m.group(1))
+        r1 = int(m.group(2))
+        if m.group(3):
+            c2 = column_index_from_string(m.group(3))
+            r2 = int(m.group(4))
+        else:
+            c2, r2 = c1, r1
+        if (abs(c2 - c1) + 1) * (abs(r2 - r1) + 1) > 400:
+            continue
+        for rr in range(min(r1, r2), max(r1, r2) + 1):
+            for cc in range(min(c1, c2), max(c1, c2) + 1):
+                deps.add((sheet, rr, cc))
+    return deps
+
+
+def _find_cycles(wb) -> list[str]:
+    """S11: ciclos reales en el grafo de fórmulas (DFS con pila).
+
+    Detecta la circularidad estructural — rendimiento sobre saldo de la misma
+    columna, interés sobre deuda de cierre — SIN necesitar Excel: es la causa
+    del 'forecast que no calcula'. Ratios legítimos (EBT/EBIT de la misma
+    columna) no son ciclos y no aparecen aquí.
+    """
+    known = set(wb.sheetnames)
+    graph: dict[tuple[str, int, int], set[tuple[str, int, int]]] = {}
+    for name in wb.sheetnames:
+        ws = wb[name]
+        for row in ws.iter_rows(max_row=min(ws.max_row, _MAX_SCAN_ROWS),
+                                max_col=min(ws.max_column, 200)):
+            for cell in row:
+                v = cell.value
+                if isinstance(v, str) and v.startswith("="):
+                    graph[(name, cell.row, cell.column)] = _formula_deps(
+                        v, name, known)
+    WHITE, GREY, BLACK = 0, 1, 2
+    color: dict[tuple[str, int, int], int] = {}
+    cycles: list[str] = []
+
+    def fmt(node) -> str:
+        s, r, c = node
+        return f"{s}!{get_column_letter(c)}{r}"
+
+    for start in list(graph):
+        if color.get(start, WHITE) != WHITE:
+            continue
+        stack = [(start, iter(graph.get(start, ())))]
+        color[start] = GREY
+        path = [start]
+        while stack:
+            node, it = stack[-1]
+            advanced = False
+            for dep in it:
+                if dep not in graph:
+                    continue
+                st = color.get(dep, WHITE)
+                if st == GREY:
+                    i = path.index(dep) if dep in path else 0
+                    loop = path[i:] + [dep]
+                    cycles.append(" -> ".join(fmt(n) for n in loop[:6])
+                                  + (" ..." if len(loop) > 6 else ""))
+                    if len(cycles) >= 5:
+                        return cycles
+                elif st == WHITE:
+                    color[dep] = GREY
+                    path.append(dep)
+                    stack.append((dep, iter(graph.get(dep, ()))))
+                    advanced = True
+                    break
+            if not advanced:
+                color[node] = BLACK
+                stack.pop()
+                if path and path[-1] == node:
+                    path.pop()
+    return cycles
 
 
 def _gap_violations(ws: Worksheet) -> list[str]:
@@ -938,6 +1089,19 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
     else:
         findings.append(Finding("F14 modelo trimestral-nativo", True,
                                 "n/a (sin sello de periodicidad trimestral)"))
+    # F18 sin referencias circulares: grafo de dependencias + DFS. Caza la
+    # causa raiz del "forecast que no calcula" (rendimiento/interes sobre
+    # saldo de la MISMA columna) SIN necesitar Excel; ratios legitimos de la
+    # misma columna no son ciclos y no aparecen.
+    try:
+        cycles = _find_cycles(wb)
+    except Exception as exc:  # noqa: BLE001 - nunca tumbar el audit completo
+        findings.append(Finding("F18 sin referencias circulares", True,
+                                f"[no evaluado: {type(exc).__name__}]"))
+    else:
+        findings.append(Finding("F18 sin referencias circulares", not cycles,
+                                ("CICLOS: " + " | ".join(cycles[:3]))
+                                if cycles else "grafo de formulas aciclico"))
     return findings
 
 

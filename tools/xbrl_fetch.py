@@ -23,6 +23,7 @@ import os
 import sys
 import urllib.error
 import urllib.request
+from datetime import date
 from pathlib import Path
 from typing import Optional
 
@@ -115,23 +116,122 @@ def resolve_cik(ticker: str, user_agent: str) -> str:
     raise SystemExit(f"[x] ticker {wanted} no encontrado")
 
 
-def period_label(item: dict) -> Optional[str]:
-    """fp/fy de SEC ya son FISCALES: Q1/FY2026 -> 1Q2026 / FY2026."""
-    fp = item.get("fp")
-    fy = item.get("fy")
-    if not fp or not fy:
+def _parse_date(value: Optional[str]) -> Optional[date]:
+    try:
+        return date.fromisoformat(value) if value else None
+    except (TypeError, ValueError):
         return None
-    if fp == "FY":
+
+
+def duration_months(item: dict) -> Optional[int]:
+    """Meses cubiertos por el hecho (None si es un saldo puntual)."""
+    start = _parse_date(item.get("start"))
+    end = _parse_date(item.get("end"))
+    if not start or not end:
+        return None
+    return round((end - start).days / 30.44)
+
+
+def period_label(item: dict, fye_month: int) -> Optional[str]:
+    """Periodo FISCAL derivado de la FECHA DE CIERRE, no de fp/fy.
+
+    Critico: en companyfacts, ``fy``/``fp`` describen el filing donde aparece
+    el hecho, NO el periodo que mide — un dato con end 2024-12-28 aparece
+    etiquetado fy=2026 y produce series corridas un anio o mas. El unico
+    ancla confiable es ``end`` contra el cierre fiscal de la emisora.
+
+    Con cierre fiscal en septiembre: end 2024-12-28 -> 1Q2025 (FY2025 corre
+    de oct-2024 a sep-2025); end 2025-09-27 -> 4Q2025.
+    """
+    end = _parse_date(item.get("end"))
+    if not end:
+        return None
+    fy = end.year + (1 if end.month > fye_month else 0)
+    offset = (end.month - fye_month) % 12       # 0 = cierre de anio fiscal
+    months = duration_months(item)
+    if months is not None and months >= 11:
         return f"FY{fy}"
-    if fp in ("Q1", "Q2", "Q3", "Q4"):
-        return f"{fp[1]}Q{fy}"
-    return None
+    quarter = 4 if offset == 0 else (offset + 2) // 3
+    if quarter not in (1, 2, 3, 4):
+        return None
+    return f"{quarter}Q{fy}"
+
+
+def detect_fye_month(facts: dict) -> int:
+    """Mes de cierre fiscal, deducido de los hechos anuales (duracion ~12m)."""
+    counts: dict[int, int] = {}
+    for node in facts.values():
+        for items in node.get("units", {}).values():
+            for item in items:
+                months = duration_months(item)
+                end = _parse_date(item.get("end"))
+                if months and months >= 11 and end:
+                    counts[end.month] = counts.get(end.month, 0) + 1
+    if not counts:
+        return 12
+    return max(counts.items(), key=lambda kv: kv[1])[0]
+
+
+def deaccumulate(rows: dict[tuple[str, str], dict]) -> list[str]:
+    """Convierte flujos YTD a TRIMESTRALES (in place).
+
+    En los 10-Q los flujos son acumulados del anio fiscal: 2Q cubre 6 meses,
+    3Q nueve, FY doce. Tomarlos como trimestrales infla cada trimestre y
+    rompe el roll de caja. El trimestre real se obtiene por diferencia con
+    el acumulado previo del MISMO anio fiscal; el 4Q se deriva de FY menos
+    los tres primeros.
+    """
+    notes: list[str] = []
+    by_canon_fy: dict[tuple[str, str], dict[str, dict]] = {}
+    for (canon, period), row in rows.items():
+        if not canon.startswith("cf_") or row.get("months") is None:
+            continue
+        if period.startswith("FY"):
+            fy, q = period[2:], "FY"
+        else:
+            q, fy = period[0], period[2:]
+        by_canon_fy.setdefault((canon, fy), {})[q] = row
+    for (canon, fy), qs in by_canon_fy.items():
+        cumulative = {}
+        for q in ("1", "2", "3"):
+            row = qs.get(q)
+            if row and isinstance(row.get("value"), (int, float)):
+                cumulative[q] = row
+        # desacumular 3Q y 2Q (de mayor a menor para no usar valores ya netos)
+        for q, prev_q in (("3", "2"), ("2", "1")):
+            row, prev = cumulative.get(q), cumulative.get(prev_q)
+            if not row or not prev:
+                continue
+            if (row.get("months") or 0) <= 4:
+                continue                      # ya venia trimestral
+            row["value"] = row["value"] - prev["value"]
+            row["tag"] = "observado (desacumulado YTD)"
+            row["months"] = 3
+            notes.append(f"{canon} {q}Q{fy}")
+        # 4Q = FY - (1Q + 2Q + 3Q), ya netos
+        fy_row = qs.get("FY")
+        q4 = qs.get("4")
+        if fy_row and isinstance(fy_row.get("value"), (int, float)):
+            partials = [cumulative.get(q) for q in ("1", "2", "3")]
+            if all(p and isinstance(p.get("value"), (int, float)) for p in partials):
+                derived = fy_row["value"] - sum(p["value"] for p in partials)
+                if q4 is None or (q4.get("months") or 0) > 4:
+                    rows[(canon, f"4Q{fy}")] = {
+                        **fy_row,
+                        "canon": canon, "period": f"4Q{fy}",
+                        "value": derived, "months": 3,
+                        "tag": "derivado (FY - 1Q - 2Q - 3Q)",
+                    }
+                    notes.append(f"{canon} 4Q{fy} (derivado)")
+    return notes
 
 
 def fetch(ticker: str, dest: Path, user_agent: str) -> Path:
     cik = resolve_cik(ticker, user_agent)
     data = _get_json(FACTS_URL.format(cik=cik), user_agent)
     facts = data.get("facts", {}).get("us-gaap", {})
+    fye_month = detect_fye_month(facts)
+    print(f"[ok] cierre fiscal detectado: mes {fye_month}")
     rows: dict[tuple[str, str], dict] = {}
     found: set[str] = set()
     for concept, canon in CONCEPT_MAP.items():
@@ -143,26 +243,37 @@ def fetch(ticker: str, dest: Path, user_agent: str) -> Path:
             if unit not in ("USD", "USD/shares"):
                 continue
             for item in items:
-                label = period_label(item)
+                label = period_label(item, fye_month)
                 if not label:
                     continue
+                months = duration_months(item)
                 key = (canon, label)
                 prev = rows.get(key)
-                # dedup: gana el filed mas reciente (re-presentaciones)
-                if prev is None or item.get("filed", "") > prev["filed"]:
-                    rows[key] = {
-                        "canon": canon, "period": label,
-                        "value": item.get("val"),
-                        "start": item.get("start", ""), "end": item.get("end", ""),
-                        "form": item.get("form", ""), "filed": item.get("filed", ""),
-                        "concept": concept, "unit": unit,
-                        "source": f"XBRL companyfacts CIK{cik} {concept}",
-                        "tag": "observado",
-                    }
+                # dedup: gana el filed mas reciente (re-presentaciones); entre
+                # duraciones distintas del mismo periodo gana la mas corta
+                # (el hecho del trimestre, no el acumulado que tambien cierra ahi)
+                if prev is not None:
+                    pm, cm = prev.get("months"), months
+                    if pm is not None and cm is not None and cm != pm:
+                        if pm < cm:
+                            continue
+                    elif item.get("filed", "") <= prev["filed"]:
+                        continue
+                rows[key] = {
+                    "canon": canon, "period": label,
+                    "value": item.get("val"), "months": months,
+                    "start": item.get("start", ""), "end": item.get("end", ""),
+                    "form": item.get("form", ""), "filed": item.get("filed", ""),
+                    "concept": concept, "unit": unit,
+                    "source": f"XBRL companyfacts CIK{cik} {concept}",
+                    "tag": "observado",
+                }
+    deacc = deaccumulate(rows)
+    print(f"[ok] flujos desacumulados/derivados: {len(deacc)}")
     dest.mkdir(parents=True, exist_ok=True)
     out = dest / f"xbrl_facts_{ticker.upper()}.csv"
-    fieldnames = ["canon", "period", "value", "start", "end", "form", "filed",
-                  "concept", "unit", "source", "tag"]
+    fieldnames = ["canon", "period", "value", "months", "start", "end",
+                  "form", "filed", "concept", "unit", "source", "tag"]
     ordered = sorted(rows.values(), key=lambda r: (r["canon"], r["end"]))
     with out.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=fieldnames)

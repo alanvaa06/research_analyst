@@ -27,6 +27,11 @@ Inputs: industry-report vigente en `research/industry/` (economía de la industr
    - top-down: PIB (macro-view) × crecimiento de industria vs PIB (industry-report)
      × participación de la emisora.
    Ambas van al modelo y se reconcilian por fórmula (`Rev_Reconcile`, check D2).
+   La reconciliación aplica a años PLENAMENTE estimados: el año de transición
+   (con trimestres ya observados) no se reconcilia contra supuestos — su
+   crecimiento es hecho. Si el observado del año en curso supera con mucho la
+   prima de industria supuesta, eso es INFORMACIÓN DE TESIS (la industria va
+   más rápido que tu supuesto), no un error de modelo: llévalo al debate.
 3. Drivers de costo y capex también: el cobre es revenue para la minera y costo para
    el cablero. Cada línea material del modelo → su driver. **Working capital por
    días (DIO/DSO/DPO) es obligatorio** en esta sección — alimenta el bloque core

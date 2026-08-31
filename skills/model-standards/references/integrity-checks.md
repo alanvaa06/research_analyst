@@ -42,7 +42,7 @@ implementación única, cero interpretación del agente.
 | # | Check | Regla |
 |---|---|---|
 | D1 | **Cobertura de drivers**: cada línea de forecast referencia un input de Assumptions | línea sin driver = flag (driver-inventory la reporta) |
-| D2 | **Reconciliación de revenue**: ruta bottom-up (schedules) vs top-down (PIB × industria × participación) | divergencia > umbral (default 10%) = flag: supuesto roto |
+| D2 | **Reconciliación de revenue**: ruta bottom-up (schedules) vs top-down (PIB × industria × participación) | divergencia > umbral (default 10%) = flag: supuesto roto. **Excluye el año de TRANSICIÓN** (el que ya tiene trimestres observados pero no los 4): la reconciliación compara dos rutas de SUPUESTOS, y un año mayormente ocurrido es hecho, no supuesto — reportar `n/a (transición)`. Detección genérica: `COUNTIF` de headers `*Q<año>A` en Operating entre 1 y 3. Si un año PLENO diverge, ahí sí es supuesto roto |
 | D3 | **Staleness de comps**: `as_of` de cada snapshot dentro de `stale_days` | snapshot viejo = flag en Val_Comps |
 | D4 | **Cruce de terminales**: múltiplo implícito por Gordon y g implícita por exit multiple, ambos visibles | divergencia grande = revisar g o múltiplo con el analista |
 | D5 | **Convergencia de métodos**: si DDM/FCFE/RI activos junto a DCF, divergencia extrema entre métodos se reporta como supuesto inconsistente | nunca se "promedia" para ocultarla |

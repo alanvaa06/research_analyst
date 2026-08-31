@@ -30,6 +30,16 @@ Hamada. Cero fórmulas comprimidas. Convenciones de cada pieza:
   re-tecleado.
 - WACC: componentes visibles — rf de `Macro` (macro-view), ERP de `Macro`, beta
   (supuesto con fuente), costo de deuda, pesos a mercado. Cada uno etiquetado.
+- **Diagnóstico del horizonte** (lectura del check D4): si NINGUNA g
+  económicamente sostenible — por debajo del crecimiento nominal de largo
+  plazo de la economía, ~4% — reconcilia el terminal Gordon con el múltiplo de
+  salida anclado en comps, el problema NO son los supuestos: **el horizonte
+  explícito es demasiado corto**. El mercado descuenta un periodo largo de
+  crecimiento superior, no una perpetuidad a esa tasa; con el horizonte
+  correcto ese crecimiento se agota DENTRO del tramo explícito y la g terminal
+  vuelve a ser baja y defendible. Antes de forzar la g o el múltiplo para que
+  D4 pase, evaluar si extender el horizonte es la respuesta honesta. Señal de
+  alarma: el valor terminal domina el valor total (regla práctica: >75%).
 - **Terminal dual obligatorio:** Gordon (g) Y exit multiple, lado a lado.
   Cruce: Gordon ⇒ múltiplo implícito; exit multiple ⇒ g implícita. Ambos visibles.
   Divergencia grande = check D4: revisar supuesto con el analista, no promediar.

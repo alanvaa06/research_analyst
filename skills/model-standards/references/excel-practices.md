@@ -130,6 +130,32 @@ subtotales) → 14 bold sub-sección → 16 bold sección y título de hoja.
      cierre` en silencio. El CF necesita TODAS sus secciones — en emisoras
      con tesorería grande, el movimiento de valores negociables (compras,
      ventas, vencimientos) es el mayor flujo después del operativo.
+
+## Estructura obligatoria del estado de flujos
+
+Cada subtotal se construye como SUMA DE SUS COMPONENTES y debe cuadrar contra
+el subtotal OBSERVADO de la fuente:
+
+```
+CFO = utilidad neta + D&A + SBC + ΔWC (desglosado) + otros ajustes operativos
+CFI = −capex − compras de valores + ventas/vencimientos + otros de inversión
+CFF = −recompras − dividendos + movimiento de deuda + otros de financiamiento
+cambio neto = CFO + CFI + CFF
+```
+
+**Línea de conciliación derivada** (el "otros …" de cada subtotal): cuando la
+captura no desglosa todas las partidas, una fila explícita absorbe la
+diferencia contra el observado — `otros = subtotal_observado − Σ componentes`.
+Es un plug LEGÍTIMO si y solo si: (i) vive en su propia fila visible, (ii)
+lleva comentario que dice qué absorbe, y (iii) cierra contra un dato
+observado, no contra un número deseado. Un plug escondido dentro de otra línea
+es falsificación; uno declarado es contabilidad honesta.
+
+Ancla del histórico: el efectivo del BALANCE (saldo puntual, sin
+desacumulación) es el dato más confiable — la conciliación se calibra contra
+él. Ojo con el alcance: el CF suele reconciliar *cash + restricted cash*
+mientras el balance reporta solo *cash and equivalents*; esa diferencia es
+parte de lo que la línea derivada absorbe.
 - **Sin dato en una serie: JAMÁS texto** (`n/d`, `n/a`) en columnas de periodo
   — envenena SUMPRODUCT y toda aritmética aguas abajo (#VALUE!). El hueco es
   decisión del ANALISTA con gate: 0 explícito con comentario de celda,

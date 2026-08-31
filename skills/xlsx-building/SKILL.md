@@ -115,6 +115,20 @@ reconstruirlo, el orden es fijo:
    reconstruir jamás cambia números en silencio. Diferencias INTENCIONALES
    (ej. corregir un hardcode) se listan explícitas en el reporte.
 
+## Mecánica de las herramientas (aprendido en producción, no negociable)
+
+- **openpyxl BORRA la caché de valores calculados al guardar.** Todo `save()`
+  de openpyxl deja el libro con fórmulas pero sin resultados: si auditas sin
+  recalcular, S10/F19 reportan miles de falsos "sin calcular". **Después de
+  CADA escritura con openpyxl, recalcular con Excel COM**
+  (`CalculateFullRebuild` + `Save`) antes de auditar o leer valores.
+- **Para INSERTAR o BORRAR filas usa Excel COM, jamás openpyxl.** COM ajusta
+  todas las fórmulas del libro al desplazar; openpyxl no ajusta nada y deja
+  cientos de referencias apuntando a la fila equivocada — corrupción
+  silenciosa que ningún check de formato detecta.
+- Tras insertar filas, **re-verifica un output clave** (valor por acción,
+  balance check): un salto inexplicado significa referencias rotas.
+
 ## Qué NO hace esta skill
 
 - No decide contenido ni supuestos (eso es driver-inventory / el analista).

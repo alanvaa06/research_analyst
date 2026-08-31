@@ -23,7 +23,7 @@ fórmula + valuación). Menos tabs, mejor; secciones colapsables en ambas.
 | — | `Val_Comps` | Múltiplos POR FÓRMULA desde comps/*.yaml; media armónica; justificados + PVGO | Staleness de snapshots flaggeada |
 | — | `Val_<método>` | Solo métodos activos del perfil (DDM / FCFE / NAV_AFFO / SOTP) | RI: especificado, inactivo v1 |
 | — | `Sensitivity` | Data tables 2 variables, aisladas | Tab dedicada |
-| — | `Summary` | Football field (métodos activos) + 3-5 outputs clave | Ejecutivo: una pantalla |
+| — | `Summary` | Resumen ejecutivo completo (ver §Summary) | Una pantalla; solo fórmulas/links |
 
 Modo `annual`: una sola hoja `Model` anual (estructura del §Operating con
 años FY y la sección DCF incluida). La tab `Quarterly` YA NO EXISTE en ningún
@@ -102,6 +102,37 @@ periodos para ver el valor por acción.
     la entrevista de populate va trimestre por trimestre).
   - DCF sobre los FY agregados de `Annual` (el valor terminal domina; los
     trimestres aportan precisión del agregado, no el descuento).
+
+## §Summary — resumen ejecutivo (una pantalla, valores en columna C)
+
+Secciones, todas por fórmula/link — cero tecleo:
+
+1. **Football field**: valor por acción de CADA método activo + precio de
+   mercado con fecha + **upside/downside %** por método. Si Sensitivity tiene
+   data tables: rango bull/bear por método (min-max de la tabla), no solo el
+   punto.
+2. **Lecturas clave** (~8): CAGR de ventas del forecast · margen EBIT terminal
+   · FCF del último año proyectado · spread ROIC−WACC · deuda neta/EBITDA ·
+   g terminal del analista · g implícita del mercado (reverse DCF) · brecha de
+   expectativas.
+3. **Drivers vs guidance**: los 3 drivers más materiales del driver-map —
+   supuesto del analista vs guidance citado (si existe) vs realizado UDM.
+4. **Sensibilidad clave**: valor/acción a WACC ±1pp y g ±0.5pp (links a la
+   data table de Sensitivity).
+5. **Estado del modelo**: celda de error del Cover (link) · fecha del último
+   trimestre capturado · fecha del industry-report vigente · fecha de
+   macro-view (`updated_at`).
+6. **Tesis**: fecha de la última entrada del thesis-journal + estado declarado
+   (confirmada / erosionada / pendiente — texto que el analista mantiene en el
+   journal; aquí solo se refleja).
+
+## Respiro tipográfico (check F16)
+
+**Una fila EN BLANCO antes de cada header y sub-header** (separa el bloque
+anterior); entre headers CONSECUTIVOS no se inserta (un header que sigue
+inmediatamente a otro no lleva respiro); tras un header el contenido empieza
+en la fila siguiente, sin blanco. El colapso del outline se ve limpio y la
+lectura expandida respira.
 
 ## Reglas transversales
 

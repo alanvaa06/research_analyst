@@ -763,6 +763,28 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
     findings.append(Finding("F15 series sin huecos", not gap_hits,
                             "; ".join(gap_hits[:8]) or
                             "sin huecos en filas de serie"))
+    # F16 respiro tipografico: fila EN BLANCO antes de cada header/sub-header
+    # (salvo headers consecutivos y el tope de la hoja) — elegancia del modelo.
+    breath_hits: list[str] = []
+    for ws in visible:
+        if ws.title not in ("Operating", "Annual", "Model", "Schedules",
+                            "Summary"):
+            continue
+        for r in range(6, min(ws.max_row, _MAX_SCAN_ROWS) + 1):
+            if not _is_header_row(ws, r):
+                continue
+            prev = r - 1
+            if _is_header_row(ws, prev):
+                continue  # headers consecutivos: sin respiro
+            prev_has_content = any(
+                ws.cell(row=prev, column=c).value is not None
+                for c in range(1, min(ws.max_column, 30) + 1))
+            if prev_has_content:
+                label = ws.cell(row=r, column=2).value
+                breath_hits.append(f"{ws.title}!fila {r} ({str(label)[:22]})")
+    findings.append(Finding("F16 respiro antes de headers", not breath_hits,
+                            "; ".join(breath_hits[:6]) or
+                            "headers con fila en blanco previa"))
     # F13 completitud + UNICIDAD de Ratios: el set completo presente, y cada
     # razon UNA sola vez por hoja — un label duplicado delata secciones
     # "Ratios historico" / "Ratios forecast" partidas (bug del smoke #3);

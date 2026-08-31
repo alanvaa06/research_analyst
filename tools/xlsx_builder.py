@@ -792,7 +792,7 @@ def _series_continuity_violations(ws: Worksheet) -> list[str]:
         if _is_header_row(ws, r):
             continue
         filled_inputs = 0
-        empties = 0
+        vals = []
         for col in period_cols:
             cell = ws.cell(row=r, column=col)
             is_input_fill = (cell.fill is not None
@@ -801,9 +801,22 @@ def _series_continuity_violations(ws: Worksheet) -> list[str]:
                              == Color.INPUT_FILL.value)
             if cell.value is not None and is_input_fill:
                 filled_inputs += 1
-            if cell.value is None:
-                empties += 1
-        if filled_inputs >= 3 and empties > 0:
+            vals.append(cell.value)
+        if filled_inputs < 3:
+            continue
+        # Mismo carve-out que F15: hasta 4 huecos INICIALES son legitimos
+        # (growth yoy / UDM sin ventana previa van VACIOS, no con texto);
+        # un hueco DESPUES del primer dato si es serie rota.
+        first = next((i for i, v in enumerate(vals) if v is not None), None)
+        if first is None:
+            continue
+        interior_empty = sum(1 for v in vals[first:] if v is None)
+        if first <= 4:
+            if interior_empty > 0:
+                violations.append(
+                    f"{ws.title}!fila {r} ({interior_empty} celdas vacias)")
+        elif interior_empty > 0 or first > 0:
+            empties = sum(1 for v in vals if v is None)
             violations.append(f"{ws.title}!fila {r} ({empties} celdas vacias)")
     return violations
 
@@ -973,6 +986,14 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
             continue
         for r in range(6, min(ws.max_row, _MAX_SCAN_ROWS) + 1):
             if _is_header_row(ws, r):
+                continue
+            # Exencion explicita: serie que la EMISORA descontinuo (deja de
+            # reportar el dato) o linea declarada como deuda de driver. No se
+            # inventa un forecast de un dato que la fuente ya no publica; la
+            # fila queda como referencia historica documentada en su label.
+            lab_txt = str(ws.cell(row=r, column=2).value or "").lower()
+            if ("descontinuad" in lab_txt or "deuda de driver" in lab_txt
+                    or "sin driver" in lab_txt):
                 continue
             a_filled = sum(1 for c in ca_
                            if ws.cell(row=r, column=c).value is not None)

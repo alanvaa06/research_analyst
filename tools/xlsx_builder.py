@@ -330,10 +330,30 @@ class ModelStyler:
 
     def group_rows(self, ws: Worksheet, start: int, end: int,
                    hidden: bool = False) -> None:
-        """Outline level 1 so sections collapse to summary view."""
-        for r in range(start, end + 1):
+        """Outline level 1 so sections collapse to summary view.
+
+        La fila EN BLANCO final del rango se deja FUERA del grupo: si la
+        separacion vive dentro del bloque, al colapsar desaparece y los
+        headers quedan pegados — justo en la vista donde mas se necesita.
+        El respiro pertenece al esqueleto de la hoja, no al bloque.
+        """
+        last = end
+        while last >= start:
+            has_content = any(ws.cell(row=last, column=c).value is not None
+                              for c in range(1, min(ws.max_column, 40) + 1))
+            if has_content:
+                break
+            last -= 1
+        if last < start:
+            # Rango entero sin contenido (scaffold aun sin poblar): agrupar
+            # todo tal cual — no hay separacion que preservar todavia.
+            last = end
+        for r in range(start, last + 1):
             ws.row_dimensions[r].outlineLevel = 1
             ws.row_dimensions[r].hidden = hidden
+        for r in range(last + 1, end + 1):
+            ws.row_dimensions[r].outlineLevel = 0
+            ws.row_dimensions[r].hidden = False
 
     def label_col_width(self, ws: Worksheet, width: float = 42.0) -> None:
         """Column A = narrow navigation column ('x' markers); B = labels."""
@@ -967,9 +987,15 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
             prev_has_content = any(
                 ws.cell(row=prev, column=c).value is not None
                 for c in range(1, min(ws.max_column, 30) + 1))
+            label = ws.cell(row=r, column=2).value
             if prev_has_content:
-                label = ws.cell(row=r, column=2).value
                 breath_hits.append(f"{ws.title}!fila {r} ({str(label)[:22]})")
+            elif (prev in ws.row_dimensions
+                  and ws.row_dimensions[prev].outlineLevel):
+                # El respiro existe pero vive DENTRO del grupo: al colapsar
+                # desaparece y los headers quedan pegados.
+                breath_hits.append(
+                    f"{ws.title}!fila {prev} (respiro agrupado, se pierde al colapsar)")
     findings.append(Finding("F16 respiro antes de headers", not breath_hits,
                             "; ".join(breath_hits[:6]) or
                             "headers con fila en blanco previa"))

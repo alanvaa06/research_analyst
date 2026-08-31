@@ -401,6 +401,13 @@ class ModelStyler:
         """
         skipped: list[str] = []
         r = start_row
+        # Auto-generar referencias de periodo previo: el caller pasa canons
+        # planos ({c}); aqui se derivan los <canon>_p ({p}) que usan las
+        # plantillas — evita el footgun de claves manuales.
+        ref = dict(ref)
+        for k, v in list(ref.items()):
+            if not k.endswith("_p") and isinstance(v, str) and "{c}" in v:
+                ref.setdefault(k + "_p", v.replace("{c}", "{p}"))
 
         def row_out(label: str, template: str, fmt: NumFmt,
                     needs: tuple[str, ...]) -> None:
@@ -434,16 +441,16 @@ class ModelStyler:
         row_out("Rotacion de activos (Ventas/Activos prom.)",
                 '=IF(AVERAGE({ta_p},{ta})=0,"",{rev}/AVERAGE({ta_p},{ta}))', NumFmt.DEC2, ("rev", "ta", "ta_p"))
         row_out("Apalancamiento (Activos/Capital prom.)",
-                '=IF(AVERAGE({eq_p},{equity})=0,"",AVERAGE({ta_p},{ta})/AVERAGE({eq_p},{equity}))', NumFmt.DEC2, ("ta", "ta_p", "equity", "eq_p"))
-        row_out("ROE DuPont 3", '=IF(AVERAGE({eq_p},{equity})=0,"",{ni}/AVERAGE({eq_p},{equity}))', NumFmt.PCT1, ("ni", "equity", "eq_p"))
+                '=IF(AVERAGE({equity_p},{equity})=0,"",AVERAGE({ta_p},{ta})/AVERAGE({equity_p},{equity}))', NumFmt.DEC2, ("ta", "ta_p", "equity", "equity_p"))
+        row_out("ROE DuPont 3", '=IF(AVERAGE({equity_p},{equity})=0,"",{ni}/AVERAGE({equity_p},{equity}))', NumFmt.PCT1, ("ni", "equity", "equity_p"))
         row_out("Carga fiscal (NI/EBT)", '=IF({ebt}=0,"",{ni}/{ebt})', NumFmt.PCT1, ("ni", "ebt"))
         row_out("Carga de interes (EBT/EBIT)", '=IF({ebit}=0,"",{ebt}/{ebit})', NumFmt.PCT1, ("ebt", "ebit"))
         row_out("Margen EBIT (EBIT/Ventas)", '=IF({rev}=0,"",{ebit}/{rev})', NumFmt.PCT1, ("ebit", "rev"))
         row_out("ROE DuPont 5 (producto)",
-                '=IF(OR({ebt}=0,{ebit}=0,{rev}=0,AVERAGE({eq_p},{equity})=0),"",'
+                '=IF(OR({ebt}=0,{ebit}=0,{rev}=0,AVERAGE({equity_p},{equity})=0),"",'
                 '{ni}/{ebt}*{ebt}/{ebit}*{ebit}/{rev}*{rev}/AVERAGE({ta_p},{ta})'
-                '*AVERAGE({ta_p},{ta})/AVERAGE({eq_p},{equity}))', NumFmt.PCT1,
-                ("ni", "ebt", "ebit", "rev", "ta", "ta_p", "equity", "eq_p"))
+                '*AVERAGE({ta_p},{ta})/AVERAGE({equity_p},{equity}))', NumFmt.PCT1,
+                ("ni", "ebt", "ebit", "rev", "ta", "ta_p", "equity", "equity_p"))
         r += 1
 
         header("ROIC y economic profit")
@@ -698,15 +705,31 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
     for ws in visible:
         if ws.title not in ("Operating", "Annual", "Model", "Ratios"):
             continue
-        for row in ws.iter_rows(min_col=1, max_col=2,
-                                max_row=min(ws.max_row, _MAX_SCAN_ROWS)):
-            for cell in row:
-                v = cell.value
-                if isinstance(v, str):
-                    for req in REQUIRED_RATIO_LABELS:
-                        if req.lower() in v.lower():
-                            key_ = (ws.title, req)
-                            counts[key_] = counts.get(key_, 0) + 1
+        for r in range(1, min(ws.max_row, _MAX_SCAN_ROWS) + 1):
+            a_cell = ws.cell(row=r, column=1)
+            b_cell = ws.cell(row=r, column=2)
+            # Saltar encabezados de seccion/sub-seccion (mismo criterio que
+            # F7: bold >=13) — sus titulos contienen nombres de razones
+            # ("ROIC y economic profit") y NO son filas de razon.
+            def _is_header(c) -> bool:
+                return (c.font is not None and c.font.bold
+                        and (c.font.size or 0) >= 13)
+            if _is_header(a_cell) or _is_header(b_cell):
+                continue
+            label = b_cell.value
+            if not isinstance(label, str) or not label.strip():
+                label = a_cell.value
+            if not isinstance(label, str):
+                continue
+            low = label.strip().lower()
+            if low == "x":
+                continue
+            # Comparacion por PREFIJO: "CCC (DSO+DIO-DPO)" cuenta solo para
+            # CCC, no para DSO/DIO/DPO (que aparecen como substring).
+            for req in REQUIRED_RATIO_LABELS:
+                if low.startswith(req.lower()):
+                    key_ = (ws.title, req)
+                    counts[key_] = counts.get(key_, 0) + 1
     labels_found = {label for (_, label) in counts}
     missing_ratios = [x for x in REQUIRED_RATIO_LABELS if x not in labels_found]
     dup_ratios = [f"{sheet}:{label}" for (sheet, label), n in counts.items()

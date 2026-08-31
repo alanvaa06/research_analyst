@@ -5,69 +5,98 @@ formato y fórmulas viven en `skills/model-standards/references/excel-practices.
 (base CFI); los checks en `references/integrity-checks.md`; las pestañas de valuación
 en `references/valuation-conventions.md`.
 
-Doctrina de forma (patrón CFI verificado en el corpus — su "Financial Model"
-apila estados, schedules y valuación en UNA hoja con outline): **menos tabs,
-mejor; el modelo vive en UNA hoja con secciones colapsables.**
+Doctrina de forma (diseño 2026-08-31, reemplaza la hoja única y las columnas
+intercaladas): **dos hojas por granularidad y propósito** — `Operating`
+(trimestral puro: ahí se CONSTRUYE el modelo) y `Annual` (agregados por
+fórmula + valuación). Menos tabs, mejor; secciones colapsables en ambas.
 
-## Pestañas (en este orden)
+## Pestañas (en este orden, modo `quarterly`)
 
 | # | Tab | Contenido | Regla |
 |---|---|---|---|
 | 1 | `Cover` | Propósito, versión, autor, fecha, leyenda de colores, **celda única de error check** | La celda agrega TODOS los checks del libro |
 | 2 | `Checks` | Todos los checks de integridad, uno por fila, con estado | Solo fórmulas; ver integrity-checks.md |
-| 3 | `Model` | **LA hoja del modelo** — secciones apiladas con outline, en este orden: **Assumptions → IS → BS → CF → DCF → Ratios → Schedules** | Ver §Model abajo. Balance check y tie-out por columna en fila 3, congelados |
-| 4 | `Macro` | Valores traídos de macro/macro-view.yaml, con fuente y fecha | Solo lectura del yaml; sin inputs propios |
-| — | `Quarterly` | Condicional (`annual_plus_quarterly`): captura trimestral observada + LTM + actual-vs-estimado | Alimenta calibración de /update-quarter; cross-foot C8 |
+| 3 | `Operating` | **El operating model, trimestral puro** — secciones: Assumptions → IS → BS → CF → Ratios → Schedules | Ver §Operating. ÚNICA hoja con inputs (S6). Sin columnas FY |
+| 4 | `Annual` | **Agregados anuales + valuación** — misma estructura (sin Assumptions) + sección DCF | Ver §Annual. CERO números tecleados: fórmulas y links (C8/F14) |
+| 5 | `Macro` | Históricos observados de `macro/series/` (última obs + serie anual, con fuente y fecha) + valores de macro/macro-view.yaml | Sin inputs propios; yaml vacío = AVISO D6, la tab nunca queda muerta |
 | — | `Rev_Reconcile` | Doble ruta de revenue: bottom-up (bloques Sch) vs top-down (Macro × industria × participación) | Divergencia > umbral → flag en error check |
 | — | `Val_Comps` | Múltiplos POR FÓRMULA desde comps/*.yaml; media armónica; justificados + PVGO | Staleness de snapshots flaggeada |
 | — | `Val_<método>` | Solo métodos activos del perfil (DDM / FCFE / NAV_AFFO / SOTP) | RI: especificado, inactivo v1 |
 | — | `Sensitivity` | Data tables 2 variables, aisladas | Tab dedicada |
 | — | `Summary` | Football field (métodos activos) + 3-5 outputs clave | Ejecutivo: una pantalla |
 
-## §Model — la hoja única
+Modo `annual`: una sola hoja `Model` anual (estructura del §Operating con
+años FY y la sección DCF incluida). La tab `Quarterly` YA NO EXISTE en ningún
+modo (la captura trimestral vive en `Operating`).
 
-Secciones con header de banda (naranja/brand) y contenido agrupado (outline
-nivel 1), colapsables a vista ejecutiva:
+## §Operating — el operating model (trimestral puro)
 
-1. **Assumptions** — TODOS los inputs del analista: drivers (del driver-map),
-   bloque industry, refs a macro, switch de escenarios (una celda CHOOSE/INDEX),
-   bloque de constantes nombradas (`DAYS_YEAR`, `THOUSANDS`). ÚNICA sección con
-   celdas de input (azul + amarillo) — check S6 aplica por sección, no por tab.
-2. **IS / BS / CF** — histórico (desde `model/inputs/canonical_*.csv`) +
-   forecast, una serie = una fila (F11/F12).
-3. **DCF** — FCFF multi-stage; terminal DUAL (Gordon y exit multiple cruzados);
-   bloque Hamada; reverse DCF (g implícita de mercado).
-4. **Ratios** — generada por `ModelStyler.build_ratios` (bloques completos:
-   DuPont 3/5, ROIC + economic profit, rentabilidad/liquidez/solvencia, CCC,
-   DFL, calidad de utilidades). Completitud auditada por check F13.
-5. **Schedules** — un bloque `Sch: <nombre>` por driver del driver-map + cores
-   (PPE, Debt, WC). Nunca una hoja por schedule (S9).
+- Header: `1Q2016A … 4Q2031E` — SOLO trimestres, corte A/E en el último
+  trimestre reportado; histórico trimestral = `quarterly_history_years`
+  (perfil, default 10). Los años previos al corte NO aparecen aquí.
+- Secciones (banda + outline colapsable, marcador `x` col A, labels col B):
+  1. **Assumptions** — por trimestre en TODO el forecast (decisión deliberada:
+     la fatiga se paga una vez, el contexto beneficia cada run). Única zona de
+     input del libro (S6). Switch de escenarios, constantes nombradas.
+  2. **IS / BS / CF** — histórico desde `canonical_quarterly.csv` (C9),
+     forecast por drivers. Una serie = una fila (F11/F12).
+  3. **Ratios** — `build_ratios`, UNA llamada sobre el horizonte completo:
+     una fila por razón cruzando histórico y forecast. PROHIBIDO seccionar
+     "Ratios histórico" y "Ratios forecast" (F13 unicidad).
+  4. **Schedules** — bloques `Sch: <nombre>` + cores (PPE, Debt, WC). Nunca
+     una hoja por schedule (S9).
+
+## §Annual — agregados + valuación
+
+- Header: `FY2016A … FY2031E` (formatos `0"A"`/`0"E"`). **Cero números
+  tecleados**: toda celda es fórmula de agregación leyendo `Operating`, o
+  link a captura anual observada.
+  - Flujos (IS, CF): FY = Σ de los 4 trimestres del año fiscal.
+  - Stocks (BS): FY = valor del 4Q.
+  - Ratios: RECALCULADOS sobre agregados anuales (no promedio de trimestres).
+  - Años pre-corte trimestral: observados anuales de `canonical_annual.csv`
+    (misma fila, tramo distinto).
+- Secciones: lectura informativa (crecimientos anuales implícitos de los
+  supuestos trimestrales — calculada, NO editable) → IS → BS → CF → Ratios →
+  Schedules agregados → **DCF/Valuación**.
+
+### Sección DCF — línea por línea (obligatorio; cero fórmulas comprimidas)
+
+```
+EBIT (link a Annual §IS)                         [hist + forecast]
+(-) Impuestos sobre EBIT (t efectiva x EBIT)     [hist + forecast]
+NOPAT                                            [hist + forecast]
+(+) D&A (link)                                   [hist + forecast]
+(-) Capex (link)                                 [hist + forecast]
+(-) Delta working capital (link)                 [hist + forecast]
+FCFF                                             [hist + forecast]  <- sanity: FCFF realizado visible
+Factor de descuento (mid-year opcional)          [solo forecast]
+PV de FCFF                                       [solo forecast]
+Suma PV explicitos
+TV Gordon = FCFF_n x (1+g) / (WACC - g)
+TV exit = EBITDA_n x multiplo
+PV del TV (Gordon) · PV del TV (exit)
+Deuda neta actual (desglose citado)
+EV (Gordon) · EV (exit) · Equity (Gordon) · Equity (exit)
+Acciones diluidas · Valor por accion — Gordon · Valor por accion — exit
+Cruce: multiplo implicito del TV Gordon · g implicita del exit (check D4)
+Reverse DCF: EV de mercado · TV implicita · g implicita de mercado (D4b)
+Bloque Hamada (beta pure-play, mecanica visible)
+```
 
 ## Periodicidad (`model_periodicity` del perfil)
 
 - `annual`: columnas anuales FY puras.
-- `quarterly` — **modelo trimestral-nativo** (decisión de diseño 2026-08-31;
-  `annual_plus_quarterly` queda DEPRECADO y se trata como `quarterly`):
-  el modelo se CONSTRUYE sobre trimestres; lo anual es un AGREGADO calculado,
-  nunca una serie paralela.
-  - **Columnas intercaladas** por año fiscal: `1Q25A 2Q25A 3Q25A 4Q25A FY25A |
-    1Q26E … FY26E …`. La columna FY es FÓRMULA por línea: flujos = Σ4Q;
-    stocks (balance) = valor del 4Q; ratios/márgenes = recalculados sobre el
-    agregado. FY jamás es input (check C8 estructural + F14).
-  - **Histórico trimestral: últimos `quarterly_history_years` años** (perfil,
-    default 10); antes del corte, solo columnas FY observadas (XBRL trimestral
-    confiable ~2010+; el largo plazo anual queda para tendencias).
-  - **Assumptions POR TRIMESTRE en todo el horizonte de forecast** — decisión
-    deliberada del analista dueño del plugin: la fatiga de captura se paga UNA
-    vez al iniciar cobertura y compra contexto purista que beneficia todos los
-    runs futuros (calibración trimestre a trimestre, guidance mapeado 1:1).
-    La entrevista de populate va trimestre por trimestre.
-  - **DCF sobre los FY agregados** (sección DCF anual): el valor terminal
-    domina y el descuento trimestral no paga su complejidad; los trimestres
-    aportan la precisión del agregado, no el descuento.
-  - La tab `Quarterly` desaparece en este modo — la captura trimestral
-    observada VIVE en las columnas del Model; `model/inputs/` sigue siendo la
-    fuente (C9).
+- `quarterly` — **modelo trimestral-nativo en dos hojas**
+  (`annual_plus_quarterly` DEPRECADO, se trata como `quarterly`): el modelo se
+  CONSTRUYE sobre trimestres en `Operating`; lo anual es AGREGADO por fórmula
+  en `Annual`, jamás serie paralela ni input (ver §Operating y §Annual).
+  - Histórico trimestral: `quarterly_history_years` (default 10); el largo
+    plazo pre-corte vive como FY observados en `Annual`.
+  - Assumptions POR TRIMESTRE en todo el forecast (la fatiga se paga una vez;
+    la entrevista de populate va trimestre por trimestre).
+  - DCF sobre los FY agregados de `Annual` (el valor terminal domina; los
+    trimestres aportan precisión del agregado, no el descuento).
 
 ## Reglas transversales
 

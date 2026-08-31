@@ -20,6 +20,15 @@ corren con `python tools/xlsx_builder.py audit <modelo.xlsx>` — implementació
 única, exit 1 = falla. Solo lectura: este comando NUNCA modifica el modelo.
 En modelo externo, F10 (sello del builder) se reporta `[aviso]`, no falla.
 
+## Recalculo (detección de ciclos — S10)
+
+Si hay Excel disponible (COM en Windows), recalcular el libro
+(`CalculateFullRebuild`) y re-escanear: **celda de FÓRMULA cuyo valor cacheado
+queda vacío tras el recálculo = FALLA S10** (referencia circular o cadena de
+dependencias rota — el síntoma exacto del forecast sin calcular del smoke #5).
+Sin Excel disponible: reportar S10 como `[pendiente: recalc manual]`, nunca
+como ok.
+
 ## Reporte
 
 ```

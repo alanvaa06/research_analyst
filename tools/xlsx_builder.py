@@ -602,7 +602,17 @@ def _gap_violations(ws: Worksheet) -> list[str]:
         vals = [ws.cell(row=r, column=c).value for c in pcols]
         filled = sum(1 for v in vals if v is not None)
         label = ws.cell(row=r, column=2).value or ws.cell(row=r, column=1).value
-        if filled >= max(4, len(pcols) // 2) and filled < len(pcols):
+        # Huecos INICIALES permitidos (hasta 4): growth yoy / UDM no tienen
+        # ventana previa en los primeros periodos — vacio (no texto) es la
+        # convencion. Huecos DESPUES del primer dato = serie rota.
+        first_filled = next((i for i, v in enumerate(vals) if v is not None), None)
+        if first_filled is not None and first_filled <= 4:
+            interior = vals[first_filled:]
+            interior_empty = sum(1 for v in interior if v is None)
+            if filled >= max(4, len(pcols) // 2) and interior_empty > 0:
+                hits.append(f"{ws.title}!fila {r} ({str(label)[:25]}): "
+                            f"{interior_empty} huecos")
+        elif filled >= max(4, len(pcols) // 2) and filled < len(pcols):
             hits.append(f"{ws.title}!fila {r} ({str(label)[:25]}): "
                         f"{len(pcols) - filled} huecos")
         text_cells = sum(1 for v in vals

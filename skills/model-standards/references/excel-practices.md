@@ -108,6 +108,14 @@ subtotales) → 14 bold sub-sección → 16 bold sección y título de hoja.
   saldo de apertura** (mata la circularidad sin switch de iteración).
 - IFERROR solo para errores esperados (múltiplo "na" en comps/precedents) y en
   la celda de check — nunca para tapar errores reales.
+- **Ventanas sin periodo previo** (growth yoy, UDM en los primeros trimestres):
+  la celda queda VACÍA — ni texto ni 0 falso; F15 permite hasta 4 huecos
+  INICIALES por fila (después del primer dato, un hueco = serie rota).
+- **Circularidad caja↔rendimiento↔utilidad**: rendimiento sobre caja e
+  inversiones SIEMPRE sobre el saldo de APERTURA (columna previa) — usar el
+  saldo de cierre de la misma columna crea el ciclo caja→otros ingresos→
+  utilidad→caja y Excel deja TODA la cadena sin calcular (el forecast "que no
+  recorre" del smoke #5). Mismo principio ya establecido para interés/deuda.
 - **Sin dato en una serie: JAMÁS texto** (`n/d`, `n/a`) en columnas de periodo
   — envenena SUMPRODUCT y toda aritmética aguas abajo (#VALUE!). El hueco es
   decisión del ANALISTA con gate: 0 explícito con comentario de celda,

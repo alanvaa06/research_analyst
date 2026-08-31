@@ -6,8 +6,15 @@ fila y tramo (check S5). Denominadores de balance: promedio de periodo
 ((inicio+fin)/2), consistente en TODAS las filas.
 
 **Generación: SOLO vía `ModelStyler.build_ratios`** (registro canon→fila del
-build; completitud auditada por check F13 contra `REQUIRED_RATIO_LABELS`).
-Este documento es el contrato legible de lo que ese código implementa.
+build; completitud y unicidad auditadas por check F13 contra
+`REQUIRED_RATIO_LABELS`). Este documento es el contrato legible de lo que ese
+código implementa.
+
+**Ventanas móviles (modo trimestral)**: UDM/LTM = EXACTAMENTE 4 trimestres
+(t−3 … t) — ni 5 (columna −4 a la actual: el bug del smoke #4, infla ~25%) ni
+"trimestre × 4". Toda razón anualizada sobre base trimestral (DSO/DIO/DPO,
+deuda/EBITDA, cobertura) usa flujos UDM y stocks promedio de los mismos 4
+trimestres. La fórmula de la ventana es idéntica en toda la fila (S5).
 
 ## Bloque A — DuPont
 

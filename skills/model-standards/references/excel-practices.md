@@ -124,6 +124,12 @@ subtotales) → 14 bold sub-sección → 16 bold sección y título de hoja.
      ciclo caja→otros ingresos→utilidad→caja y Excel deja la cadena entera
      sin calcular (smoke #5: el balance "cuadraba" solo donde había
      observados, y daba Error justo donde arrancaba el forecast).
+  5. **El roll debe CERRAR también en el histórico** (check F19): si el CF
+     omite una sección del flujo, el balance y el tie-out siguen verdes
+     (ambos leen el mismo efectivo observado) mientras `inicio + cambio ≠
+     cierre` en silencio. El CF necesita TODAS sus secciones — en emisoras
+     con tesorería grande, el movimiento de valores negociables (compras,
+     ventas, vencimientos) es el mayor flujo después del operativo.
 - **Sin dato en una serie: JAMÁS texto** (`n/d`, `n/a`) en columnas de periodo
   — envenena SUMPRODUCT y toda aritmética aguas abajo (#VALUE!). El hueco es
   decisión del ANALISTA con gate: 0 explícito con comentario de celda,

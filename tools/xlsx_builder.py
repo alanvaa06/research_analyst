@@ -1140,6 +1140,22 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
     else:
         findings.append(Finding("F14 modelo trimestral-nativo", True,
                                 "n/a (sin sello de periodicidad trimestral)"))
+    # F19 roll de caja cerrado: inicio(t) + cambio(t) = cierre(t) e
+    # inicio(t) = cierre(t-1), en TODAS las columnas incluido el historico.
+    # Requiere valores calculados; sin ellos reporta [pendiente de recalc].
+    try:
+        roll_hits = _cash_roll_violations(path)
+    except Exception as exc:  # noqa: BLE001
+        findings.append(Finding("F19 roll de caja cerrado", True,
+                                f"[no evaluado: {type(exc).__name__}]"))
+    else:
+        if roll_hits is None:
+            findings.append(Finding("F19 roll de caja cerrado", True,
+                                    "n/a (sin filas de roll identificables)"))
+        else:
+            findings.append(Finding("F19 roll de caja cerrado", not roll_hits,
+                                    "; ".join(roll_hits[:6]) or
+                                    "inicio+cambio=cierre e inicio=cierre previo"))
     # F18 sin referencias circulares: grafo de dependencias + DFS. Caza la
     # causa raiz del "forecast que no calcula" (rendimiento/interes sobre
     # saldo de la MISMA columna) SIN necesitar Excel; ratios legitimos de la
@@ -1154,6 +1170,67 @@ def audit_format(path: str, brand: Optional[dict[str, str]] = None) -> list[Find
                                 ("CICLOS: " + " | ".join(cycles[:3]))
                                 if cycles else "grafo de formulas aciclico"))
     return findings
+
+
+def _cash_roll_violations(path: str) -> Optional[list[str]]:
+    """F19: el roll de caja debe CERRAR en todas las columnas.
+
+    (i) inicio(t) = cierre(t-1)  — el desfase temporal;
+    (ii) inicio(t) + cambio neto(t) = cierre(t) — la identidad del roll.
+
+    (ii) es el que caza un flujo de efectivo INCOMPLETO: si el CF omite una
+    seccion (p. ej. el movimiento de valores negociables, el mayor flujo
+    despues del operativo en emisoras con tesoreria grande), el balance puede
+    seguir cuadrando con caja observada y el tie-out BS<->CF tambien — ambos
+    leen el MISMO observado — mientras el roll no cierra en silencio. Es el
+    bug del smoke #5: 38 trimestres historicos con el roll roto.
+    """
+    wbf = load_workbook(path, data_only=False)
+    wbv = load_workbook(path, data_only=True)
+    hits: list[str] = []
+    found_any = False
+    for name in wbf.sheetnames:
+        wsf, wsv = wbf[name], wbv[name]
+        ca, ce = _period_columns(wsf)
+        pcols = sorted(set(ca + ce))
+        if len(pcols) < 4:
+            continue
+        r_open = r_close = r_change = None
+        for r in range(1, min(wsf.max_row, _MAX_SCAN_ROWS) + 1):
+            lab = str(wsf.cell(row=r, column=2).value or "").lower()
+            if not lab:
+                continue
+            if r_open is None and ("al inicio" in lab or "inicial" in lab
+                                   or "apertura" in lab):
+                r_open = r
+            elif r_close is None and ("al cierre" in lab or "final" in lab):
+                r_close = r
+            elif r_change is None and ("cambio neto" in lab
+                                       or "aumento (disminucion)" in lab
+                                       or "variacion neta" in lab):
+                r_change = r
+        if not (r_open and r_close and r_change):
+            continue
+        found_any = True
+        for i, c in enumerate(pcols):
+            col = get_column_letter(c)
+            op = wsv.cell(row=r_open, column=c).value
+            cl = wsv.cell(row=r_close, column=c).value
+            ch = wsv.cell(row=r_change, column=c).value
+            if all(isinstance(x, (int, float)) for x in (op, ch, cl)):
+                tol = max(1.0, abs(cl) * 1e-6)
+                if abs(op + ch - cl) > tol:
+                    hdr = wsf.cell(row=4, column=c).value
+                    hits.append(f"{name}!{col} ({hdr}): inicio+cambio != cierre "
+                                f"(brecha {op + ch - cl:,.0f})")
+            if i > 0:
+                prev_cl = wsv.cell(row=r_close, column=pcols[i - 1]).value
+                if (isinstance(op, (int, float))
+                        and isinstance(prev_cl, (int, float))
+                        and abs(op - prev_cl) > max(1.0, abs(op) * 1e-6)):
+                    hdr = wsf.cell(row=4, column=c).value
+                    hits.append(f"{name}!{col} ({hdr}): inicio != cierre previo")
+    return hits if found_any else None
 
 
 def _split_series_violations(ws: Worksheet) -> list[str]:

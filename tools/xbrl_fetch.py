@@ -56,11 +56,34 @@ CONCEPT_MAP = {
     "LongTermDebtNoncurrent": "bs_debt_lt",
     "LongTermDebtCurrent": "bs_debt_st",
     "CommercialPaper": "bs_commercial_paper",
+    # --- Flujo de efectivo: SUBTOTALES primero. Sin CFI/CFF/cambio neto el
+    # roll de caja no cierra (inicio + cambio != cierre) y el modelo hereda
+    # un flujo de inversion incompleto — el bug del smoke #5.
     "NetCashProvidedByUsedInOperatingActivities": "cf_cfo",
+    "NetCashProvidedByUsedInInvestingActivities": "cf_cfi",
+    "NetCashProvidedByUsedInFinancingActivities": "cf_cff",
+    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect": "cf_net_change",
+    "CashAndCashEquivalentsPeriodIncreaseDecrease": "cf_net_change_alt",
+    "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "cf_cash_eop_incl_restricted",
     "DepreciationDepletionAndAmortization": "cf_da",
+    "ShareBasedCompensation": "cf_sbc",
     "PaymentsToAcquirePropertyPlantAndEquipment": "cf_capex",
     "PaymentsForRepurchaseOfCommonStock": "cf_buybacks",
     "PaymentsOfDividends": "cf_dividends",
+    "PaymentsOfDividendsCommonStock": "cf_dividends_common",
+    # Movimiento de valores negociables: para emisoras con tesoreria grande
+    # es el mayor flujo despues del operativo; omitirlo descuadra el roll.
+    "PaymentsToAcquireAvailableForSaleSecuritiesDebt": "cf_buy_securities",
+    "ProceedsFromSaleOfAvailableForSaleSecuritiesDebt": "cf_sell_securities",
+    "ProceedsFromMaturitiesPrepaymentsAndCallsOfAvailableForSaleSecuritiesDebt": "cf_mature_securities",
+    "PaymentsToAcquireBusinessesNetOfCashAcquired": "cf_acquisitions",
+    "PaymentsForProceedsFromOtherInvestingActivities": "cf_other_investing",
+    # Deuda
+    "ProceedsFromIssuanceOfLongTermDebt": "cf_debt_issued",
+    "RepaymentsOfLongTermDebt": "cf_debt_repaid",
+    "ProceedsFromRepaymentsOfCommercialPaper": "cf_commercial_paper_net",
+    "ProceedsFromIssuanceOfCommonStock": "cf_stock_issued",
+    "PaymentsRelatedToTaxWithholdingForShareBasedCompensation": "cf_tax_withholding",
 }
 
 

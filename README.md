@@ -2,7 +2,7 @@
 
 > Copiloto de análisis bursátil: acompaña a un analista desde "me asignaron
 > cubrir esta empresa" hasta "publiqué mi reporte".
-> Open source · **CFA Society México · AI for Finance** · v0.2 (en dogfood).
+> Open source · **CFA Society México · AI for Finance** · v0.5.2 (en dogfood).
 
 Un analista de acciones pasa semanas leyendo reportes, armando un Excel y
 escribiendo su nota. Este plugin **organiza, redacta, verifica y cuestiona** ese
@@ -33,11 +33,12 @@ enruta cada tarea a la skill correcta. Codex también lee el marketplace:
 `codex plugin marketplace add alanvaa06/research_analyst`.
 
 > **Entornos con red restringida (Claude Cowork, sandboxes):** para que la
-> descarga de filings y de historia XBRL funcione, permite los dominios
-> `www.sec.gov` y `data.sec.gov` en el allowlist del entorno ANTES de abrir
-> la cobertura. Si no se puede, corre `tools/sec_fetch.py` y
-> `tools/xbrl_fetch.py` en tu máquina local y copia los archivos — los tools
-> te lo indican solos al detectar el bloqueo.
+> descarga de filings, de historia XBRL y de series macro funcione, permite los
+> dominios `www.sec.gov`, `data.sec.gov` y `api.stlouisfed.org` en el allowlist
+> del entorno ANTES de abrir la cobertura. Si no se puede, corre
+> `tools/sec_fetch.py`, `tools/xbrl_fetch.py` y `tools/fred_fetch.py` en tu
+> máquina local y copia los archivos — los tools te lo indican solos al detectar
+> el bloqueo.
 
 ## El flujo completo
 
@@ -104,6 +105,10 @@ reciente y nada se borra jamás (retención de 7 años).
 <tu-carpeta-raíz>/             # cualquier nombre; adentro SOLO emisoras + macro/
 ├── macro/                     # TODO lo macro, compartido por todas las coberturas:
 │   ├── macro-view.yaml        #   los supuestos vigentes (tasa, FX, PIB, inflación)
+│   ├── series/                #   históricos observados que baja `tools/fred_fetch.py`
+│   │                          #     (un CSV por serie + manifest con fuente y fecha)
+│   ├── fred.key               #   tu API key de FRED (gratuita); nunca sale del disco
+│   ├── fred-series.txt        #   opcional: IDs de series extra que quieras bajar
 │   ├── sources/               #   tu research macro y el de terceros (pdf, html, md)
 │   └── history/               #   cada versión anterior del view, fechada
 └── AAPL/
@@ -155,7 +160,10 @@ responde a lenguaje natural, sobre coberturas del plugin o trabajo tuyo previo.
 - **`macro/`** — los supuestos macro de la casa (tasa, FX, PIB) viven una sola
   vez a nivel workspace y alimentan todas las coberturas. Deja tu research en
   `macro/sources/` y `/update-macro` te propone la actualización campo por
-  campo, con cita — tú confirmas cada valor.
+  campo, con cita — tú confirmas cada valor. Los históricos observados
+  (UST 10Y, Fed Funds, CPI, PIB real, USDMXN) los baja `tools/fred_fetch.py` a
+  `macro/series/` con API key gratuita de FRED, para que la propuesta salga de
+  series con fuente y no de memoria.
 - **`sources/`** (macro y por industria) — deja ahí research tuyo o de terceros
   en cualquier formato; el pipeline lo considera y lo cita. ¿Quieres leer un
   `.yaml` sin pelearte con el formato? Pídele al asistente: "explícame mi
@@ -165,14 +173,16 @@ responde a lenguaje natural, sobre coberturas del plugin o trabajo tuyo previo.
 
 ## Contribuir
 
+El protocolo completo — invariantes que ningún PR puede romper, cómo agregar un
+check, convenciones de commits, checklist de verificación — está en
+[`CONTRIBUTING.md`](CONTRIBUTING.md). Léelo antes de abrir un PR.
+
 Fronteras conocidas, cada una un PR bienvenido: bancos (Anexo 33 vs IFRS 9),
 aseguradoras (CNSF vs IFRS 17), citas NIF pendientes de fuente primaria,
-convención AFFO de FIBRAs, suite de evals, y **conectores de series macro**:
-FRED (tasas/CPI/PIB US + FX, API key gratuita vía env) y Banxico SIE (series
-MX, token gratuito) bajando a `macro/series/` como CSVs con manifest — mismo
-patrón que `tools/sec_fetch.py` — para que `/update-macro` proponga valores
-`observado` desde series de tiempo, no solo datos puntuales tecleados.
-Regla de la casa: toda cita normativa con fuente primaria o `[VERIFICAR]`.
+convención AFFO de FIBRAs, suite de evals, y el **conector de Banxico SIE**
+(series MX, token gratuito) bajando a `macro/series/` como CSVs con manifest —
+mismo patrón que `tools/fred_fetch.py`, que ya cubre FRED. Regla de la casa:
+toda cita normativa con fuente primaria o `[VERIFICAR]`.
 
 El diseño completo y el porqué de cada decisión: [`docs/architecture.md`](docs/architecture.md).
 

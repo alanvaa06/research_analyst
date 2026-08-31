@@ -111,11 +111,19 @@ subtotales) → 14 bold sub-sección → 16 bold sección y título de hoja.
 - **Ventanas sin periodo previo** (growth yoy, UDM en los primeros trimestres):
   la celda queda VACÍA — ni texto ni 0 falso; F15 permite hasta 4 huecos
   INICIALES por fila (después del primer dato, un hueco = serie rota).
-- **Circularidad caja↔rendimiento↔utilidad**: rendimiento sobre caja e
-  inversiones SIEMPRE sobre el saldo de APERTURA (columna previa) — usar el
-  saldo de cierre de la misma columna crea el ciclo caja→otros ingresos→
-  utilidad→caja y Excel deja TODA la cadena sin calcular (el forecast "que no
-  recorre" del smoke #5). Mismo principio ya establecido para interés/deuda.
+- **Roll-forward de caja — el DESFASE es el contrato** (check C10). Cuatro
+  fórmulas, sin excepción, idénticas en toda la serie:
+  1. `Efectivo al inicio(t) = Efectivo al cierre(t−1)` — referencia LITERAL a
+     la celda de cierre de la columna previa; el primer periodo de forecast
+     abre con el último cierre OBSERVADO.
+  2. `Efectivo al cierre(t) = inicio(t) + Δ neto de efectivo(t)`.
+  3. `BS caja(t) = CF cierre(t)` — la fila de caja del balance LEE el cierre
+     del CF de la misma columna (tie-out C2); jamás una serie propia.
+  4. Todo rendimiento/interés que dependa de caja, inversiones o deuda usa el
+     saldo de APERTURA (= cierre t−1) — cierre de la misma columna crea el
+     ciclo caja→otros ingresos→utilidad→caja y Excel deja la cadena entera
+     sin calcular (smoke #5: el balance "cuadraba" solo donde había
+     observados, y daba Error justo donde arrancaba el forecast).
 - **Sin dato en una serie: JAMÁS texto** (`n/d`, `n/a`) en columnas de periodo
   — envenena SUMPRODUCT y toda aritmética aguas abajo (#VALUE!). El hueco es
   decisión del ANALISTA con gate: 0 explícito con comentario de celda,

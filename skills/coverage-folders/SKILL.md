@@ -23,7 +23,10 @@ metadatos, mueve y renombra. Las demás skills solo leen rutas.
    BMV-annual/BMV-quarterly/evento relevante/**transcript de earnings call**),
    periodo, y renombra según la convención
    (`<TICKER>_<tipo>_<periodo>[_fecha].<ext>`). Transcripts van a
-   `transcripts/`. Ambigüedad ⇒ preguntar.
+   `transcripts/`; investor day, presentaciones y docs de guidance del
+   management a `filings/management/`; consenso y notas sell-side a
+   `research/sell-side/<fuente>_YYYY-MM-DD.md` (fechados, se leen después de
+   poblar drivers). Ambigüedad ⇒ preguntar.
 3. Checklist de faltantes contra la **HISTORIA COMPLETA disponible** — el
    default del plugin es perspectiva de largo plazo: TODOS los 10-K y 10-Q (y
    equivalentes BMV) que existan, porque los drivers, márgenes y calibración se

@@ -62,7 +62,7 @@ externo se audita igual.
 | # | Check | Regla |
 |---|---|---|
 | F1 | Gridlines ocultas | `showGridLines = False` en TODAS las hojas visibles |
-| F2 | Fuente estándar | Una sola familia (Arial Narrow) en celdas usadas |
+| F2 | Fuente estándar | Una sola familia (Aptos Narrow, `FONT_NAME` del builder) en celdas usadas |
 | F3 | Colores de fuente | Whitelist: negro, azul input `FF0000FF`, verde link `FF00CC00`, rojo warn, blanco |
 | F4 | Paleta de fills | Whitelist: navy `FF132E57`, naranja `FFED942D`, teal `FF1E8496`, amarillo input `FFFFF2CC`, gris escenario. Con `brand/DESIGN.md` presente, sus 3 slots se suman a la whitelist (pasar el archivo al audit) |
 | F5 | Formatos numéricos | Whitelist literal (miles con paréntesis y guion-cero, %, 0.0x, USD, fecha, A/E, `;;;`) |
@@ -78,7 +78,7 @@ externo se audita igual.
 | F19 | **Roll de caja cerrado** | En TODAS las columnas, incluido el histórico: (i) `inicio(t) = cierre(t−1)` y (ii) **`inicio(t) + cambio neto(t) = cierre(t)`**. El (ii) es el que caza un CF INCOMPLETO: si falta una sección del flujo (p. ej. el movimiento de valores negociables — el mayor flujo después del operativo en emisoras con tesorería grande), C1 y C2 siguen en verde porque ambos leen el MISMO efectivo observado, mientras el roll no cierra en silencio. Bug del smoke #5: 38 trimestres históricos con el roll roto y todos los demás checks verdes |
 | F18 | **Sin referencias circulares** | Grafo de dependencias de fórmulas + DFS, SIN necesitar Excel: un ciclo = el forecast no calcula (causa raíz del smoke #5: `caja → otros ingresos → utilidad → CFO → caja`). Reporta la cadena completa del ciclo. Ratios legítimos de la misma columna (EBT/EBIT) NO son ciclos y no aparecen. Complementa S10 (que sí requiere recalc) |
 | F17 | **FORECAST COMPLETO** (mandato duro) | Toda fila con histórico (≥3 celdas en columnas A) tiene el tramo E COMPLETO — una sola celda de forecast vacía = FALLA con fila y conteo. "Los forecast deben tener todas las fórmulas completas" — regla de primera clase, no negociable |
-| F16 | **Respiro antes de headers** | Fila EN BLANCO antes de cada header/sub-header (salvo headers consecutivos y el tope de la hoja); tras un header el contenido empieza sin blanco. Elegancia auditada, no opcional |
+| F16 | **Respiro antes de headers** | Fila EN BLANCO antes de cada header/sub-header (salvo headers consecutivos y el tope de la hoja); tras un header el contenido empieza sin blanco. Elegancia auditada, no opcional. **Prevención en el builder:** `section_header`/`subsection` FALLAN al construir si la fila previa tiene contenido y no es header (v0.6.0) — el respiro deja de depender de que el agente se acuerde |
 | F15 | **Series sin huecos ni texto** (S5 hecho código) | Dos venenos: (a) fila con contenido en ≥ mitad de las columnas de periodo pero con celdas VACÍAS = fórmula faltante en un tramo (la NOPAT del smoke #4); (b) TEXTO literal (`n/d`, `n/a`) en columnas de periodo de una fila de serie = rompe la cadena de cálculo (#VALUE! aguas abajo). El hueco de dato es DECISIÓN del analista con gate: 0 explícito con comentario, carry-forward del último disponible (fórmula marcada supuesto), o exclusión documentada — jamás texto. Bloques de valor único no disparan; detección reconoce años A/E Y trimestres de texto |
 
 ## Reporte de /model-check
@@ -88,3 +88,15 @@ externo se audita igual.
 Resumen: N ok, M fallas, K avisos
 Falla => exit report "FALLA", lista de celdas/hojas afectadas, siguiente acción sugerida
 ```
+
+## Resultados en la tab Checks: fórmula viva o escaneo FECHADO
+
+Un check de la tab `Checks` es una **fórmula viva** sobre el libro (C1–C7, D2,
+D4, D9) o el **resultado de un escaneo por código** al construir (C8, C9, D3,
+D6, D10, D1). Un literal `"OK"` sin fecha ni nota es un check congelado: queda
+verde aunque el hecho cambie (bug de la auditoría AAPL 2026-09-02: D3 decía
+`OK` con snapshots vencidos). Regla: todo resultado que no sea fórmula se
+escribe con `ModelStyler.check_result(ws, row, col, resultado, note=..., computed_at=YYYY-MM-DD)`
+— el builder rechaza el literal sin `computed_at` y sin `note`, y deja la
+fecha de cálculo en la celda contigua para que el lector sepa cuándo dejó de
+ser verdad.

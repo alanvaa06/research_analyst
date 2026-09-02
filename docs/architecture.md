@@ -94,4 +94,10 @@ Huecos conocidos marcados `[VERIFICAR]` (ver README → Áreas de oportunidad).
 ## Estado
 
 - v0.1.0: diseño completo + 7 skills + 3 comandos + 6 templates + adapters.
-- Pendiente: dogfood con una emisora real; suite de evals; push a GitHub público.
+- v0.5.x (2026-08-30 → 2026-09-02): dogfood con AAPL (modelo trimestral-nativo
+  v3 reproducible desde `build_model.py`, CF completo desde la capa de captura,
+  19 checks F + 10 S en verde); doctrina de la auditoría completa
+  (`integrity-checks.md`); builder con respiro fail-fast y `check_result`
+  fechado.
+- Pendiente: suite de evals; push a GitHub público; slots `filings/management/`
+  y `research/sell-side/` en uso real.

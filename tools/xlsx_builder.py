@@ -21,7 +21,10 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Iterable, Optional
 
+from datetime import date
+
 from openpyxl import Workbook, load_workbook
+from openpyxl.comments import Comment
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import column_index_from_string, get_column_letter
 from openpyxl.workbook.properties import CalcProperties
@@ -257,9 +260,23 @@ class ModelStyler:
         c = ws.cell(row=row, column=1, value="x")
         c.font = Font(name=FONT_NAME, size=8, color=color)
 
+    def _require_breath(self, ws: Worksheet, row: int) -> None:
+        """F16 por construccion: la fila previa a un header debe estar VACIA o
+        ser otro header (consecutivos). Falla al construir, no en el audit."""
+        if row <= 1:
+            return
+        prev_is_header = ws.cell(row=row - 1, column=1).value == "x"
+        prev_has_content = any(ws.cell(row=row - 1, column=c).value is not None
+                               for c in (2, 3))
+        if prev_has_content and not prev_is_header:
+            raise ValueError(
+                f"F16: header en {ws.title}!fila {row} sin fila en blanco previa "
+                f"(fila {row - 1} tiene contenido). Deja una fila de respiro.")
+
     def section_header(self, ws: Worksheet, row: int, title: str,
                        last_col: int = 18) -> None:
         """Banda azul oscuro, texto BLANCO bold 16 — una por seccion."""
+        self._require_breath(ws, row)
         for col in range(1, last_col + 1):
             ws.cell(row=row, column=col).fill = PatternFill(
                 "solid", fgColor=self.color_section)
@@ -271,6 +288,7 @@ class ModelStyler:
     def subsection(self, ws: Worksheet, row: int, title: str,
                    last_col: int = 18) -> None:
         """Banda azul claro, texto negro bold 14 — sub-jerarquia."""
+        self._require_breath(ws, row)
         for col in range(1, last_col + 1):
             ws.cell(row=row, column=col).fill = PatternFill(
                 "solid", fgColor=self.color_accent)
@@ -292,6 +310,33 @@ class ModelStyler:
         cell.number_format = numfmt.value
         if role is CellRole.INPUT:
             cell.fill = PatternFill("solid", fgColor=Color.INPUT_FILL.value)
+
+    def check_result(self, ws: Worksheet, row: int, col: int, result: object, *,
+                     note: Optional[str] = None,
+                     computed_at: Optional[str] = None) -> None:
+        """Celda de resultado de un check (tab Checks o bloque de vigencia).
+
+        Dos formas validas: FORMULA viva (empieza con '=') o resultado de un
+        ESCANEO por codigo al construir — entonces ``computed_at`` (YYYY-MM-DD)
+        y ``note`` son obligatorios: la fecha va en la celda contigua y la nota
+        como comentario. Un literal sin fecha es un check congelado (queda
+        verde aunque el hecho cambie) y se rechaza.
+        """
+        is_formula = isinstance(result, str) and result.startswith("=")
+        if not is_formula:
+            if not computed_at or not note:
+                raise ValueError(
+                    f"check_result {ws.title}!fila {row}: resultado literal "
+                    f"{result!r} sin computed_at/note — un check no se afirma "
+                    "sin fecha de calculo ni evidencia (usa formula o escaneo).")
+            date.fromisoformat(computed_at)          # valida el formato
+        self.set_cell(ws, f"{get_column_letter(col)}{row}", result,
+                      CellRole.WARN, NumFmt.GENERAL)
+        if not is_formula:
+            self.set_cell(ws, f"{get_column_letter(col + 1)}{row}",
+                          f"calc. {computed_at}", CellRole.LABEL, NumFmt.GENERAL,
+                          size=9)
+            ws.cell(row=row, column=col).comment = Comment(note, "research_analyst")
 
     def series_row(self, ws: Worksheet, row: int, label: str, first_col: int,
                    hist_values: list[object], forecast_values: list[object],

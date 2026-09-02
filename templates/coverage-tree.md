@@ -35,10 +35,14 @@ subcarpeta intermedia (`workspace/`, `coberturas/`, etc.).
     │   │   ├── 10-K/
     │   │   ├── 10-Q/
     │   │   └── 8-K/
-    │   └── bmv/
-    │       ├── annual/
-    │       ├── quarterly/
-    │       └── eventos-relevantes/
+    │   ├── bmv/
+    │   │   ├── annual/
+    │   │   ├── quarterly/
+    │   │   └── eventos-relevantes/
+    │   └── management/           # INPUTS: investor day, presentaciones y docs
+    │                             #   de guidance del management (statement-mapper
+    │                             #   los lee como fuente de guidance, igual que
+    │                             #   transcripts/; jamás como observado)
     ├── transcripts/              # INPUTS: earnings calls — si están, SE CONSIDERAN
     │                             # (statement-mapper los lee como fuente de guidance)
     ├── comps/                    # INPUTS: snapshots fechados por comparable
@@ -60,8 +64,13 @@ subcarpeta intermedia (`workspace/`, `coberturas/`, etc.).
     │   │   ├── sources/          # research de industria del analista y de
     │   │   │                     #   terceros (insumo de /update-industry)
     │   │   └── industry-report_YYYY-MM-DD.md   # generados; vigente = más reciente
-    │   └── notes/
-    │       └── <ticker>-note_YYYY-MM-DD.md     # notas de inversión (etapa 7)
+    │   ├── notes/
+    │   │   └── <ticker>-note_YYYY-MM-DD.md     # notas de inversión (etapa 7)
+    │   └── sell-side/            # consenso y notas de terceros, FECHADOS
+    │       └── <fuente>_YYYY-MM-DD.md   # GATE: se leen DESPUÉS de que el
+    │                             #   analista pobló sus drivers, nunca antes
+    │                             #   (sesgo de anclaje); el contraste consenso
+    │                             #   vs propio se registra en journal/decisions.md
     └── journal/                  # REGISTRO append-only
         ├── thesis-journal.md     # entradas de cada gate/debate
         ├── decisions.md          # observado / guidance / supuesto / output, con fecha

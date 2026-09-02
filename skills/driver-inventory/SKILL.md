@@ -37,7 +37,10 @@ Inputs: industry-report vigente en `research/industry/` (economía de la industr
    días (DIO/DSO/DPO) es obligatorio** en esta sección — alimenta el bloque core
    `Sch: WC` — o se justifica explícitamente en "Líneas sin driver".
 4. Cada driver ancla EXPLÍCITAMENTE a: supuesto de industria (sección 7 del reporte),
-   deck de macro-view, guidance (etiquetado), o supuesto propio de la emisora.
+   deck de macro-view, guidance (etiquetado — de `transcripts/` y de
+   `filings/management/`: investor day, presentaciones), o supuesto propio de
+   la emisora. **Nunca a consenso ni a una nota sell-side**: el analista
+   proyecta con lo que sabe; el sell-side entra después (populate, paso 4).
 5. Escribe `driver-map.md` (formato abajo). Gate: el usuario aprueba el mapa — este
    es el contrato de entrada de model-standards.
 
@@ -79,7 +82,14 @@ Una fila sin ancla es una opinión con formato de tabla — rechazarla en el gat
 3. Contraste vs guidance: donde el supuesto del analista difiere del guidance,
    registrar la diferencia y el porqué en `journal/decisions.md` (es información de
    tesis, no un error). El guidance citable incluye lo extraído de
-   `transcripts/` por statement-mapper — citar transcript y periodo.
+   `transcripts/` y de `filings/management/` por statement-mapper — citar
+   documento y periodo.
+4. **Sell-side al final, nunca al principio (gate anti-anclaje):** consenso y
+   notas de terceros (`research/sell-side/`, fechados) se abren SOLO cuando
+   todos los drivers ya tienen el valor del analista. Si el usuario los trae
+   antes, la skill los aparta y lo dice. Después: contraste consenso vs propio
+   driver por driver, registrado en `journal/decisions.md` con la fuente y su
+   fecha — una diferencia con el consenso es tesis, no un error a corregir.
 
 ## Mantenimiento (`/update-quarter` paso 5) — calibración
 

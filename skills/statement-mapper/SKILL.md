@@ -62,6 +62,12 @@ trimestre por trimestre de 10-Qs; el filing HTML queda para lo que XBRL no trae
    segmento) etiquetado `guidance` con cita (transcript, sección/página). Es la
    fuente de guidance más rica del periodo; alimenta el contraste de
    driver-inventory y el triage.
+5c. **Materiales de management (`filings/management/`):** investor day,
+   presentaciones a inversionistas y documentos de guidance se leen con la
+   misma regla que los transcripts — todo lo cuantitativo etiquetado
+   `guidance` con cita (documento, página/diapositiva, fecha); nunca
+   `observado`. Notas sell-side y consenso NO son fuente de esta skill (van a
+   `research/sell-side/` y los abre driver-inventory después de poblar).
 6. Anti-doble-captura: verifica contra lo ya capturado antes de escribir.
 
 ## Procedimiento — comp snapshot (modo ligero)
